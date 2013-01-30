@@ -13,7 +13,7 @@ International freight data operation
 
 #计算farekey
 
-ORG+DST+BASE_AIRLINE+CITY_PATH+SELL_START_DATE+SELL_END_DATE+TRAVELER_TYPE_ID
+oraclefids+ORG+DST+BASE_AIRLINE+CITY_PATH+SELL_START_DATE+SELL_END_DATE+TRAVELER_TYPE_ID
 
 #get对应farekey的id
 if nil then 
