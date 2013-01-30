@@ -1,0 +1,71 @@
+{
+    "OP": "1",
+    "LINE_TYPE": "1",
+    "CITY_PATH": "CAN-PEK-LAX",
+    "ORG": "CAN",
+    "DST": "LAX",
+    "P_NUMBER": "2",
+    "PERIODS": [
+        {
+            "START_DATE": "20130101",
+            "END_DATE": "20130130",
+            "FARE_ID": "158",
+            "GO_WEEKS": [
+                "1",
+                "2"
+            ],
+            "BACK_WEEKS": [
+                "5",
+                "6"
+            ]
+        },
+        {
+            "START_DATE": "20130901",
+            "END_DATE": "20131030",
+            "FARE_ID": "153"
+        }
+    ],
+    "SELL_START_DATE": "20130103",
+    "SELL_END_DATE": "20130928",
+    "S_NUMBER": "1",
+    "SEGMENTS": [
+        {
+            "CARRIER": "航空公司名字",
+            "ORGCITY": "广州",
+            "DSTCITY": "北京",
+            "DEPAIRPORT": "广州白云机场",
+            "ARRAIRPORT": "北京南苑机场",
+            "BUNK": "F",
+            "BUNKLEVEL": "3",
+            "LIMITEDTIMEINDEX": [
+                "201301010930",
+                "201302011000"
+            ],
+            "LIMITEDTIMEDATA": [
+                "201301011600",
+                "201302011700"
+            ],
+            "ALLOWTIMEINDEX": [
+                "201301010930"
+            ],
+            "ALLOWTIMEDATA": [
+                "201301011600"
+            ]
+        }
+    ],
+    "TRAVELER_TYPE_ID": "3",
+    "MIN_TRAVELER_COUNT": "2",
+    "ALLOW_FLIGHT": [
+        "CZ1521",
+        "CA5830"
+    ],
+    "NOT_ALLOW_FLIGHT": [
+        "CZ1521",
+        "CA5830"
+    ],
+    "PRICE": "11900.00",
+    "CHILD_PRICE": "100.00",
+    "CURRENCY_CODE": "CNY",
+    "BASE_AIRLINE": "CZ",
+    "POLICY_ID": "2354324"
+}
