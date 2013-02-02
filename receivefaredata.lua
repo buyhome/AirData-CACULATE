@@ -29,7 +29,7 @@ if ngx.var.request_method == "POST" then
 	if pcontent then
 
 		-- Maybe 1000000 process POST faredata
-		-- local tmprandom = math.random(1,1000000);
+		local tmprandom = math.random(1,1000000);
 		local content = JSON.decode(pcontent);
 		
 		-- Check baseSEGMENTS's S_NUMBER.
@@ -59,7 +59,7 @@ if ngx.var.request_method == "POST" then
 		else
 			-- Caculate farekey:ORG+DST+BASE_AIRLINE+CITY_PATH+SELL_START_DATE+SELL_END_DATE+TRAVELER_TYPE_ID
 			-- Add oraclefids to protect the farekey is unique.
-			local farekey = ngx.md5(oraclefids .. content.ORG .. content.DST .. content.BASE_AIRLINE .. content.CITY_PATH .. content.SELL_START_DATE .. content.SELL_END_DATE .. content.TRAVELER_TYPE_ID);
+			local farekey = ngx.md5(tmprandom .. ngx.now() .. oraclefids .. content.ORG .. content.DST .. content.BASE_AIRLINE .. content.CITY_PATH .. content.SELL_START_DATE .. content.SELL_END_DATE .. content.TRAVELER_TYPE_ID);
 			local cavhcmd = content.ORG .. content.DST .. content.BASE_AIRLINE;
 			ngx.print("AVHCMD is: ", cavhcmd);
 			ngx.print("\r\n---------------------\r\n");
@@ -106,12 +106,49 @@ if ngx.var.request_method == "POST" then
 				ngx.print("\r\n---------------------\r\n");
 				
 				-- baseFARE information.
-				local resbasefare, bferror = red:mset("fare:" .. fid .. ":AVHCMD", cavhcmd, "fare:" .. fid .. ":ORG", content.ORG, "fare:" .. fid .. ":DST", content.DST, "fare:" .. fid .. ":BASE_AIRLINE", content.BASE_AIRLINE, "fare:" .. fid .. ":CITY_PATH", content.CITY_PATH, "fare:" .. fid .. ":SELL_START_DATE", content.SELL_START_DATE, "fare:" .. fid .. ":SELL_END_DATE", content.SELL_END_DATE, "fare:" .. fid .. ":TRAVELER_TYPE_ID", content.TRAVELER_TYPE_ID, "fare:" .. fid .. ":S_NUMBER", content.S_NUMBER, "fare:" .. fid .. ":POLICY_ID", content.POLICY_ID, "fare:" .. fid .. ":CURRENCY_CODE", content.CURRENCY_CODE, "fare:" .. fid .. ":PRICE", content.PRICE, "fare:" .. fid .. ":CHILD_PRICE", content.CHILD_PRICE, "fare:" .. fid .. ":MIN_TRAVELER_COUNT", content.MIN_TRAVELER_COUNT)
+				local resbasefare, bferror = red:mset("fare:" .. fid .. ":AVHCMD", cavhcmd, "fare:" .. fid .. ":ORGDST", content.ORG .. content.DST, "fare:" .. fid .. ":BASE_AIRLINE", content.BASE_AIRLINE, "fare:" .. fid .. ":CITY_PATH", content.CITY_PATH, "fare:" .. fid .. ":SELL_START_DATE", content.SELL_START_DATE, "fare:" .. fid .. ":SELL_END_DATE", content.SELL_END_DATE, "fare:" .. fid .. ":TRAVELER_TYPE_ID", content.TRAVELER_TYPE_ID, "fare:" .. fid .. ":S_NUMBER", content.S_NUMBER, "fare:" .. fid .. ":POLICY_ID", content.POLICY_ID, "fare:" .. fid .. ":CURRENCY_CODE", content.CURRENCY_CODE, "fare:" .. fid .. ":PRICE", content.PRICE, "fare:" .. fid .. ":CHILD_PRICE", content.CHILD_PRICE, "fare:" .. fid .. ":MIN_TRAVELER_COUNT", content.MIN_TRAVELER_COUNT)
 				if not resbasefare then
 					ngx.say("failed to MSET basefare info: ", bferror);
 					return
 				end
-
+				local avhres, avherr = red:sadd("AVHCMD:" .. cavhcmd, fid)
+				if not avhres then
+					ngx.say("failed to SET AVHCMD: ", avherr);
+					return
+				end
+				local cityres, cityerr = red:sadd("ORGDST:" .. content.ORG .. content.DST, fid)
+				if not cityres then
+					ngx.say("failed to SET ORGDST: ", cityerr);
+					return
+				end
+				local trares, traerr = red:sadd("TRAVELER:" .. content.TRAVELER_TYPE_ID, fid)
+				if not trares then
+					ngx.say("failed to SET TRAVELER_TYPE_ID: ", traerr);
+					return
+				end
+				local snumres, snumerr = red:sadd("S_NUMBER:" .. content.S_NUMBER, fid)
+				if not snumres then
+					ngx.say("failed to SET S_NUMBER: ", snumerr);
+					return
+				end
+				-- sort fid by MIN_TRAVELER_COUNT
+				local mtcres, mtcerr = red:zadd("fare:MIN_TRAVELER_COUNT", content.MIN_TRAVELER_COUNT, fid)
+				if not mtcres then
+					ngx.say("failed to zadd the fare:MIN_TRAVELER_COUNT:" .. content.MIN_TRAVELER_COUNT, mtcerr);
+					return
+				end
+				-- sort fid by SELL_END_DATE
+				local sendres, senderr = red:zadd("fare:SELL_END_DATE", content.SELL_END_DATE, fid)
+				if not sendres then
+					ngx.say("failed to zadd the fare:SELL_END_DATE:" .. content.SELL_END_DATE, senderr);
+					return
+				end
+				-- sort fid by SELL_START_DATE
+				local sstartres, sstarterr = red:zadd("fare:SELL_START_DATE", content.SELL_START_DATE, fid)
+				if not sstartres then
+					ngx.say("failed to zadd the fare:SELL_START_DATE:" .. content.SELL_START_DATE, sstarterr);
+					return
+				end
 				-- farePERIODS information.
 				local pcount = 1;
 				for idx, value in ipairs(content.PERIODS) do
@@ -191,7 +228,7 @@ if ngx.var.request_method == "POST" then
 				ngx.print("fare:" .. farekey .. ":id: ", getfidres);
 				ngx.print("\r\n---------------------\r\n");
 			end
-			
+--[[			
 			ngx.print(content.OP);
 			ngx.print("\r\n---------------------\r\n");
 			ngx.print(content.LINE_TYPE);
@@ -212,7 +249,7 @@ if ngx.var.request_method == "POST" then
 			ngx.print("\r\n---------------------\r\n");
 			ngx.print(content.TRAVELER_TYPE_ID);
 			ngx.print("\r\n---------------------\r\n");
---[[
+
 			-- ADD LIMITEDWEEKS so content.PERIODS changed to be table.
 			for idx, value in ipairs(content.PERIODS) do
 				for key, value1 in pairs(value) do
