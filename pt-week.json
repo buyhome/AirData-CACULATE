@@ -64,7 +64,7 @@
             "DEPAIRPORT": "北京首都国际机场",
             "ARRAIRPORT": "洛杉矶国际机场",
             "BUNK": "Y",
-            "BUNKLEVEL": "5",
+            "BUNKLEVEL": "1",
             "LIMITEDTIMEINDEX": [
                 "201301010930",
                 "201302011000"
