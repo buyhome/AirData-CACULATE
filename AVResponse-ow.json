@@ -1,0 +1,132 @@
+[
+    {
+        "CARRIER": "several",
+        "S_NUMBER": "3",
+        "SEGMENTS": [
+            {
+                "AIRLINE": "CA1865",
+                "SHAREFLIGHT": "MU5107",
+                "ORG": "广州",
+                "DST": "北京",
+                "BOARDPOINT": "广州白云机场",
+                "OFFPOINT": "北京南苑机场",
+                "DEPARTURETERM": "T1",
+                "ARRITERM": "T2",
+                "DEPARTUREDATE": "20130103",
+                "DEPARTURETIME": "0750",
+                "ARRIDATE": "20130103",
+                "ARRITIME": "1000",
+                "BUNKLEVEL": "1",
+                "PLANESTYLES": "737",
+                "STAYTIME": "100"
+            },
+            {
+                "AIRLINE": "MU1865",
+                "SHAREFLIGHT": "",
+                "ORG": "北京",
+                "DST": "东京",
+                "BOARDPOINT": "北京首都机场",
+                "OFFPOINT": "靖国神社机场",
+                "DEPARTURETERM": "T8",
+                "ARRITERM": "T10",
+                "DEPARTUREDATE": "20130103",
+                "DEPARTURETIME": "1140",
+                "ARRIDATE": "20130103",
+                "ARRITIME": "1800",
+                "BUNKLEVEL": "2",
+                "PLANESTYLES": "777",
+                "STAYTIME": "360"
+            },
+            {
+                "AIRLINE": "CZ5300",
+                "SHAREFLIGHT": "SH5107",
+                "ORG": "东京",
+                "DST": "洛杉矶",
+                "BOARDPOINT": "靖国神社机场",
+                "OFFPOINT": "洛杉矶好莱坞机场",
+                "DEPARTURETERM": "T10",
+                "ARRITERM": "TW",
+                "DEPARTUREDATE": "20130104",
+                "DEPARTURETIME": "0000",
+                "ARRIDATE": "20130105",
+                "ARRITIME": "1640",
+                "BUNKLEVEL": "3",
+                "PLANESTYLES": "757",
+                "STAYTIME": ""
+            }
+        ],
+        "TOTALTIME": "120",
+        "MILEAGE": "630",
+        "MEAL": "S",
+        "ETICKET": "1",
+        "SORTFARE": [
+            {
+                "PRICE": "11900.00",
+                "BUNK": [
+                    "Y",
+                    "Y",
+                    "Y"
+                ],
+                "BUNKLEVEL": [
+                    "1",
+                    "3",
+                    "2"
+                ],
+                "FARE_ID": "151",
+                "RETREAT": "<b>更改条件：</b><br />不得更改<br /><b>未使用退票条件：</b><br />不得退票<br /><b>签转条件：</b><br />不得签转",
+                "RULE": "<b>行李规定：</b><br />BJS-SHA：普通乘客20公斤;乘坐东航自营航班的留学生、劳务和海员30公斤；;SHA-SGN：普通乘客20公斤;乘坐东航自营航班的留学生、劳务和海员30公斤；<br /><b>备注：</b><br />必须打印电子客票行程单;旅客在上海办理登机手续时,必须出示北京至上海的登机牌.也适用于劳务、海员或中国籍留学生,需提供相应签证等相关证件复印件."
+            },
+            {
+                "PRICE": "22200.00",
+                "BUNK": [
+                    "H",
+                    "Q",
+                    "Q"
+                ],
+                "BUNKLEVEL": [
+                    "1",
+                    "2",
+                    "1"
+                ],
+                "FARE_ID": "152",
+                "RETREAT": "<b>更改条件：</b><br />不得更改<br /><b>未使用退票条件：</b><br />不得退票<br /><b>签转条件：</b><br />不得签转",
+                "RULE": "<b>行李规定：</b><br />BJS-SHA：普通乘客20公斤;乘坐东航自营航班的留学生、劳务和海员30公斤；;SHA-SGN：普通乘客20公斤;乘坐东航自营航班的留学生、劳务和海员30公斤；<br /><b>备注：</b><br />必须打印电子客票行程单;旅客在上海办理登机手续时,必须出示北京至上海的登机牌.也适用于劳务、海员或中国籍留学生,需提供相应签证等相关证件复印件."
+            },
+            {
+                "PRICE": "28200.00",
+                "BUNK": [
+                    "H",
+                    "Q",
+                    "Q"
+                ],
+                "BUNKLEVEL": [
+                    "1",
+                    "1",
+                    "1"
+                ],
+                "FARE_ID": "153",
+                "RETREAT": "<b>更改条件：</b><br />不得更改<br /><b>未使用退票条件：</b><br />不得退票<br /><b>签转条件：</b><br />不得签转",
+                "RULE": "<b>行李规定：</b><br />BJS-SHA：普通乘客20公斤;乘坐东航自营航班的留学生、劳务和海员30公斤；;SHA-SGN：普通乘客20公斤;乘坐东航自营航班的留学生、劳务和海员30公斤；<br /><b>备注：</b><br />必须打印电子客票行程单;旅客在上海办理登机手续时,必须出示北京至上海的登机牌.也适用于劳务、海员或中国籍留学生,需提供相应签证等相关证件复印件."
+            },
+            {
+                "PRICE": "29200.00",
+                "BUNK": [
+                    "H",
+                    "Q",
+                    "Q"
+                ],
+                "BUNKLEVEL": [
+                    "1",
+                    "1",
+                    "1"
+                ],
+                "FARE_ID": "154",
+                "RETREAT": "<b>更改条件：</b><br />不得更改<br /><b>未使用退票条件：</b><br />不得退票<br /><b>签转条件：</b><br />不得签转",
+                "RULE": "<b>行李规定：</b><br />BJS-SHA：普通乘客20公斤;乘坐东航自营航班的留学生、劳务和海员30公斤；;SHA-SGN：普通乘客20公斤;乘坐东航自营航班的留学生、劳务和海员30公斤；<br /><b>备注：</b><br />必须打印电子客票行程单;旅客在上海办理登机手续时,必须出示北京至上海的登机牌.也适用于劳务、海员或中国籍留学生,需提供相应签证等相关证件复印件."
+            }
+        ],
+        "AIRPORTTAX": "30.00",
+        "FULETAX": "670.00",
+        "POLICY_ID": "2354324"
+    }
+]
