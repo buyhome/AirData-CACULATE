@@ -174,7 +174,7 @@ if ngx.var.request_method == "GET" then
 		-- cosocket post
 		local hc = http:new()
 		local ok, code, headers, status, body  = hc:request {
-			url = "http://113.108.131.149:8060/sbe",
+			url = "",
 			--- proxy = "http://127.0.0.1:8888",
 			--- timeout = 3000,
 			method = "POST", -- POST or GET
@@ -194,7 +194,7 @@ if ngx.var.request_method == "GET" then
 				local APPTOKEN = JSON.encode({ ["authenticator"] = clientinfo, ["timestamp"] = basetime, ["token"] = null, ["serviceName"] = "APPLY_TOKEN", ["class"] = "com.travelsky.sbeclient.authorization.AuthorizationRequest"});
 				local hc1 = http:new()
 				local ok1, code1, headers, status, body1  = hc1:request {
-					url = "http://113.108.131.149:8060/sbe",
+					url = "",
 					--- proxy = "http://127.0.0.1:8888",
 					--- timeout = 3000,
 					method = "POST", -- POST or GET
@@ -219,7 +219,7 @@ if ngx.var.request_method == "GET" then
 					-- ngx.say(skybusAuth2)
 					local hc2 = http:new()
 					local ok2, code2, headers, status, body2  = hc2:request {
-						url = "http://113.108.131.149:8060/sbe",
+						url = "",
 						--- proxy = "http://127.0.0.1:8888",
 						--- timeout = 3000,
 						method = "POST", -- POST or GET
@@ -251,33 +251,6 @@ if ngx.var.request_method == "GET" then
 			ngx.print(error002);
 		end
 	end
---[[
-	-- Extenal POST.
-        local handle = io.popen("lua /home/www/luadev/http-test.lua");
-        local resw = handle:read("*a");
-        handle:close();
-	ngx.print(resw);
-
-	-- http://113.108.131.149:8060/sbe
-	-- local sbeId = "dataservice01";
-	-- local Pwd = "dataservice01";
-	-- http://113.108.131.149:7060/sbeTry
-	-- local hangxin = "emh0ZHRlc3QwMSMxZjU0NTY5MmRkZDJiZWFjOWZjNTc0M2U2MmM0ZmMxMyNhYWFkMzQ1Ng";
-	local hangxin = "ZGF0YXNlcnZpY2UwMSM1NzZlYTNhMTU1YTE4Mjg2ZjM2NWYwMGZiZTg1ZThjYSMyMzQ1NjkxNQ==";
-	local authclientinfo = sbeId .. "#" .. ngx.md5(Pwd) .. "#" .. "23456915";
-	ngx.print(authclientinfo);
-	ngx.print("\r\n---------------------\r\n");
-	local hxclient = ngx.decode_base64(hangxin);
-	local clientinfo = ngx.encode_base64(hxclient);
-	ngx.print(clientinfo);
-	ngx.print("\r\n---------------------\r\n");
-	ngx.print(hxclient);
-	ngx.print("\r\n---------------------\r\n");
-        local handle = io.input("/home/www/AVResponse.json");
-        local resw = handle:read("*all");
-        handle:close();
-	ngx.print(resw);
---]]
 	-- put it into the connection pool of size 512,
 	-- with 0 idle timeout
 	local ok, err = red:set_keepalive(0, 512)
