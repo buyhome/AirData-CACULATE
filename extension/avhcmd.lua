@@ -12,8 +12,8 @@ local redis = require "resty.redis"
 local http = require "resty.http"
 local memcached = require "resty.memcached"
 -- originality
-local sbeId = "dataservice01";
-local Pwd = "dataservice01";
+local sbeId = "";
+local Pwd = "";
 local authclientinfo = sbeId .. "#" .. ngx.md5(Pwd) .. "#" .. "23456915";
 local clientinfo = ngx.encode_base64(authclientinfo);
 local error001 = JSON.encode({ ["errorcode"] = 001, ["description"] = "Get token from hangxin is no response"});
@@ -108,7 +108,7 @@ if ngx.var.request_method == "GET" then
 		local APPTOKEN = JSON.encode({ ["authenticator"] = clientinfo, ["timestamp"] = basetime, ["token"] = null, ["serviceName"] = "APPLY_TOKEN", ["class"] = "com.travelsky.sbeclient.authorization.AuthorizationRequest"});
 		local hc1 = http:new()
 		local ok1, code1, headers, status, body1  = hc1:request {
-			url = "http://113.108.131.149:8060/sbe",
+			url = "",
 			--- proxy = "http://127.0.0.1:8888",
 			--- timeout = 3000,
 			method = "POST", -- POST or GET
@@ -133,7 +133,7 @@ if ngx.var.request_method == "GET" then
 			-- ngx.say(skybusAuth1)
 			local hc2 = http:new()
 			local ok2, code2, headers, status, body2  = hc2:request {
-				url = "http://113.108.131.149:8060/sbe",
+				url = "",
 				--- proxy = "http://127.0.0.1:8888",
 				--- timeout = 3000,
 				method = "POST", -- POST or GET
