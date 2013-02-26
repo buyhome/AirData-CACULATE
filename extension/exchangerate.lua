@@ -4,7 +4,7 @@
 
 -------------------------------------------------------------------------------
 -- begin of the idea : http://rhomobi.com/topics/
--- QTE costum command of hangxin interface
+-- exchangerate costum command of hangxin interface
 
 -- load library
 local JSON = require("cjson");
@@ -18,7 +18,7 @@ local authclientinfo = sbeId .. "#" .. ngx.md5(Pwd) .. "#" .. "23456915";
 local clientinfo = ngx.encode_base64(authclientinfo);
 local error001 = JSON.encode({ ["errorcode"] = 001, ["description"] = "Get token from hangxin is no response"});
 local error002 = JSON.encode({ ["errorcode"] = 002, ["description"] = "Get PID from hangxin is no response"});
-local error003 = JSON.encode({ ["errorcode"] = 003, ["description"] = "Get QTEdata from hangxin is no response"});
+local error003 = JSON.encode({ ["errorcode"] = 003, ["description"] = "Get exchangerate from hangxin is no response"});
 -- local error004 = JSON.encode({ ["errorcode"] = 004, ["description"] = "Free PID from hangxin is no response"});
 -- ready to connect to master redis.
 local red, err = redis:new()
@@ -118,7 +118,7 @@ function getpid (tok)
 	end
 end
 
-function QTEdata (pid, tok, command)
+function exchangerate (pid, tok, command)
 	local basetime = ngx.localtime();
 	local errorcodeNo404 = 404;
 	local errorcodeNo403 = 403;
@@ -154,11 +154,7 @@ if ngx.var.request_method == "POST" then
 end
 
 if ngx.var.request_method == "GET" then
-	-- local basetime = ngx.localtime();
-	-- local commandtax = {"av:canlax/1may/ca", "sd1y1", "qte:/cz"};
-	local avdate = os.date("%d%b", ngx.now()+2400000);
-	local commandtax = {"i", "av:" .. ngx.var.org .. ngx.var.dst .. "/" .. avdate .. "/" .. ngx.var.airline, "sd1y1", "qte:/" .. ngx.var.airline};
-	-- local commandexrate = {"xs fsc 100cny/jpy"};
+	local commandexrate = {"xs fsc 100cny/" .. ngx.var.currency};
 	local resultCode1, token = gettoken(sbeId)
 	if resultCode1 == 404 then
 		-- Apply token get no response.
@@ -170,27 +166,27 @@ if ngx.var.request_method == "GET" then
 			-- ngx.say(resultCode2)
 			-- ngx.say(resultMsg2)
 			-- ngx.say(resbody2)
-			-- Call QTE function
-			local resultCode3, resultMsg3 = QTEdata(resultMsg2, token, commandtax)
+			-- Call exchangerate function
+			local resultCode3, resultMsg3 = exchangerate(resultMsg2, token, commandexrate)
 			if resultCode3 == 0 then
 				ngx.print(resultMsg3);
 			else
 				if resultCode3 == 403 then
 					-- ngx.print(resultMsg3);
-					local resqte = JSON.decode(resultMsg3);
-					if resqte.resultCode == 10033 then
-						local res = ngx.location.capture("/data-qte/" .. ngx.var.org .. "/" .. ngx.var.dst .. "/" .. ngx.var.airline .. "/");
+					local resexrate = JSON.decode(resultMsg3);
+					if resexrate.resultCode == 10033 then
+						local res = ngx.location.capture("/data-exrate/" .. ngx.var.currency .. "/");
 						if res.status == 200 then
 							ngx.print(res.body);
 						end
 					else
-						if resqte.resultCode == 20000 then
+						if resexrate.resultCode == 20000 then
 							local ok, err = memc:delete(token)
 							if not ok then
 								ngx.say("failed to delete PID: ", err)
 								return
 							else
-								local res = ngx.location.capture("/data-qte/" .. ngx.var.org .. "/" .. ngx.var.dst .. "/" .. ngx.var.airline .. "/");
+								local res = ngx.location.capture("/data-exrate/" .. ngx.var.currency .. "/");
 								if res.status == 200 then
 									ngx.print(res.body);
 								end
