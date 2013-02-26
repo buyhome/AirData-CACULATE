@@ -12,8 +12,8 @@ local redis = require "resty.redis"
 local http = require "resty.http"
 local memcached = require "resty.memcached"
 -- originality
-local sbeId = "dataservice01";
-local Pwd = "dataservice01";
+local sbeId = "";
+local Pwd = "";
 local authclientinfo = sbeId .. "#" .. ngx.md5(Pwd) .. "#" .. "23456915";
 local clientinfo = ngx.encode_base64(authclientinfo);
 local error001 = JSON.encode({ ["errorcode"] = 001, ["description"] = "Get token from hangxin is no response"});
@@ -59,7 +59,7 @@ function gettoken (id)
 		local APPTOKEN = JSON.encode({ ["authenticator"] = clientinfo, ["timestamp"] = basetime, ["token"] = null, ["serviceName"] = "APPLY_TOKEN", ["class"] = "com.travelsky.sbeclient.authorization.AuthorizationRequest"});
 		local hc = http:new()
 		local ok, code, headers, status, body = hc:request {
-			url = "http://113.108.131.149:8060/sbe",
+			url = "",
 			--- proxy = "http://127.0.0.1:8888",
 			--- timeout = 3000,
 			method = "POST", -- POST or GET
@@ -85,7 +85,7 @@ function getpid (tok)
 		local skybusAuth = ngx.md5(tok .. "_" .. getpiddata);
 		local hc = http:new()
 		local ok, code, headers, status, body = hc:request {
-			url = "http://113.108.131.149:8060/sbe",
+			url = "",
 			--- proxy = "http://127.0.0.1:8888",
 			--- timeout = 3000,
 			method = "POST", -- POST or GET
@@ -108,7 +108,7 @@ function exchangerate (pid, tok, command)
 	local skybusAuth = ngx.md5(tok .. "_" .. commandata);
 	local hc = http:new()
 	local ok, code, headers, status, body = hc:request {
-		url = "http://113.108.131.149:8060/sbe",
+		url = "",
 		--- proxy = "http://127.0.0.1:8888",
 		--- timeout = 3000,
 		method = "POST", -- POST or GET
@@ -131,7 +131,7 @@ function QTEdata (pid, tok, command)
 	local skybusAuth = ngx.md5(tok .. "_" .. commandata);
 	local hc = http:new()
 	local ok, code, headers, status, body = hc:request {
-		url = "http://113.108.131.149:8060/sbe",
+		url = "",
 		--- proxy = "http://127.0.0.1:8888",
 		--- timeout = 3000,
 		method = "POST", -- POST or GET
