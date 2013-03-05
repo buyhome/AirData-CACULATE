@@ -170,6 +170,13 @@ if ngx.var.request_method == "GET" then
 			local resultCode3, resultMsg3 = exchangerate(resultMsg2, token, commandexrate)
 			if resultCode3 == 0 then
 				ngx.print(resultMsg3);
+				--[[ change it into the calling program
+				local index = string.find(resultMsg3, "=");
+				local tmprate = string.sub(resultMsg3, index+1, index+9);
+				local ratei = string.find(tmprate, "[a-zA-Z]");
+				local rate = string.sub(tmprate, 0, ratei-1);
+				ngx.print(rate);
+				--]]
 			else
 				if resultCode3 == 403 then
 					-- ngx.print(resultMsg3);
@@ -202,7 +209,30 @@ if ngx.var.request_method == "GET" then
 			end
 		else
 			if resultCode2 == 403 then
-				ngx.print(resbody2);
+				-- if the token is out of date system will be wrong (20005)
+				local resexrate = JSON.decode(resbody2);
+				if resexrate.resultCode == 10033 then
+					local res = ngx.location.capture("/data-exrate/" .. ngx.var.currency .. "/");
+					if res.status == 200 then
+						ngx.print(res.body);
+					end
+				else
+					if ( resexrate.resultCode == 20000 or resexrate.resultCode == 20005 ) then
+						local ok, err = memc:delete(sbeId)
+						if not ok then
+							ngx.say("failed to delete out of date token: ", err)
+							return
+						else
+							local res = ngx.location.capture("/data-exrate/" .. ngx.var.currency .. "/");
+							if res.status == 200 then
+								ngx.print(res.body);
+							end
+						end
+					else
+						ngx.say(resultCode2)
+						ngx.print(resbody2);
+					end
+				end
 			end
 			if resultCode2 == 404 then
 				ngx.print(error002);

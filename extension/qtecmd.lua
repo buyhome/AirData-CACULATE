@@ -140,7 +140,37 @@ function QTEdata (pid, tok, command)
 		local resbody = JSON.decode(body);
 		if resbody.resultCode == 0 then
 			-- local ok, err = memc:set(tok, resbody.resultMsg, 18000)
-			return resbody.resultCode, resbody.resultMsg
+			-- check the response body "([0-9])XT"
+			local index = string.find(resbody.resultMsg, "([0-9])XT");
+			if index ~= nil then
+				return resbody.resultCode, resbody.resultMsg
+			else
+				local newcommand = {"xsfsq01"};
+				local newqte = JSON.encode({ ["commands"] = newcommand, ["ibeFlag"] = "false", ["officeNo"] = "CAN911", ["pid"] = pid, ["serviceName"] = "SBE_PID_SEND_CMD", ["timestamp"] = basetime, ["token"] = tok});
+				local skybusAuth = ngx.md5(tok .. "_" .. newqte);
+				local ok, code, headers, status, body = hc:request {
+					url = "http://113.108.131.149:8060/sbe",
+					--- proxy = "http://127.0.0.1:8888",
+					--- timeout = 3000,
+					method = "POST", -- POST or GET
+					-- add post content-type and cookie
+					headers = { skybusAuth = skybusAuth, ["Content-Type"] = "application/json" },
+					body = newqte,
+				}
+				if code == 200 then
+					-- if 200 decode or it will be wrong.
+					local resbody = JSON.decode(body);
+					if resbody.resultCode == 0 then
+						-- local ok, err = memc:set(tok, resbody.resultMsg, 18000)
+						return resbody.resultCode, resbody.resultMsg
+					else
+						return errorcodeNo403, body
+					end
+				else
+					return errorcodeNo404, status
+				end
+				-- return errorcodeNo403, body
+			end
 		else
 			return errorcodeNo403, body
 		end
@@ -206,7 +236,29 @@ if ngx.var.request_method == "GET" then
 			end
 		else
 			if resultCode2 == 403 then
-				ngx.print(resbody2);
+				local freresqte = JSON.decode(resbody2);
+				if freresqte.resultCode == 10033 then
+					local res = ngx.location.capture("/data-qte/" .. ngx.var.org .. "/" .. ngx.var.dst .. "/" .. ngx.var.airline .. "/");
+					if res.status == 200 then
+						ngx.print(res.body);
+					end
+				else
+					if ( freresqte.resultCode == 20000 or freresqte.resultCode == 20005 ) then
+						local ok, err = memc:delete(sbeId)
+						if not ok then
+							ngx.say("failed to delete out of date token: ", err)
+							return
+						else
+							local res = ngx.location.capture("/data-qte/" .. ngx.var.org .. "/" .. ngx.var.dst .. "/" .. ngx.var.airline .. "/");
+							if res.status == 200 then
+								ngx.print(res.body);
+							end
+						end
+					else
+						ngx.say(resultCode2)
+						ngx.print(resbody2);
+					end
+				end
 			end
 			if resultCode2 == 404 then
 				ngx.print(error002);
