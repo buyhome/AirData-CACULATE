@@ -1,11 +1,9 @@
--- buyhome <huangqi rhomobi com> 20130321 (v0.5.1)
+-- buyhome <huangqi@rhomobi.com> 20130321 (v0.5.1)
 -- License: same to the Lua one
 -- TODO: copy the LICENSE file
-
 -------------------------------------------------------------------------------
 -- begin of the idea : http://rhomobi.com/topics/
 -- avh of hangxin interface
-
 -- load library
 local JSON = require("cjson");
 local redis = require "resty.redis"
@@ -39,17 +37,14 @@ if not ok then
 	ngx.say("failed to connect: ", err)
 	return
 end
-
 local ok, err = memc:connect("127.0.0.1", 11211)
 if not ok then
 	ngx.say("failed to connect: ", err)
 	return
 end
-
 if ngx.var.request_method == "POST" then
         ngx.exit(ngx.HTTP_FORBIDDEN);
 end
-
 if ngx.var.request_method == "GET" then
 --[[
 	ngx.req.read_body();
@@ -83,9 +78,7 @@ if ngx.var.request_method == "GET" then
 		end
 
 	end
---]]
 	-- print the avhcmd arg[].
---[[
 	ngx.print(ngx.var.org);
 	ngx.print("\r\n---------------------\r\n");
 	ngx.print(ngx.var.dst);
@@ -160,7 +153,6 @@ if ngx.var.request_method == "GET" then
 		else
 			ngx.print(error001);
 		end
-
 	else
 		-- ::callavh::
 		local avhdata = JSON.encode({ ["org"] = ngx.var.org,  ["dst"] = ngx.var.dst, ["airline"] = ngx.var.airline, ["date"] = tonumber(ngx.var.date), ["direct"] = null, ["fltNo"] = null, ["ibeFlag"] = "false", ["nonstop"] = "false", ["officeNo"] = "CAN911", ["page"] = 0, ["serviceName"] = "SBE_AV", ["stopCity"] = "", ["timestamp"] = basetime, ["token"] = tres});

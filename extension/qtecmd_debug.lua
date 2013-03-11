@@ -1,11 +1,9 @@
--- buyhome <huangqi rhomobi com> 20130321 (v0.5.1)
+-- buyhome <huangqi@rhomobi.com> 20130321 (v0.5.1)
 -- License: same to the Lua one
 -- TODO: copy the LICENSE file
-
 -------------------------------------------------------------------------------
 -- begin of the idea : http://rhomobi.com/topics/
 -- QTE costum command of hangxin interface
-
 -- load library
 local JSON = require("cjson");
 local redis = require "resty.redis"
@@ -100,7 +98,6 @@ function getpid (tok)
 		end
 	end
 end
-
 function exchangerate (pid, tok, command)
 	local basetime = ngx.localtime();
 	-- send command
@@ -123,7 +120,6 @@ function exchangerate (pid, tok, command)
 		-- return resbody.resultCode, body
 	end
 end
-
 function QTEdata (pid, tok, command)
 	local basetime = ngx.localtime();
 	-- send command
@@ -146,11 +142,9 @@ function QTEdata (pid, tok, command)
 		-- return resbody.resultCode, commandata
 	end
 end
-
 if ngx.var.request_method == "POST" then
 	ngx.exit(ngx.HTTP_FORBIDDEN);
 end
-
 if ngx.var.request_method == "GET" then
 	-- local basetime = ngx.localtime();
 	-- local commandtax = {"av:canlax/1may/ca", "sd1y1", "qte:/cz"};
@@ -181,7 +175,6 @@ if ngx.var.request_method == "GET" then
 			ngx.print(res.body);
 		end
 	end
-
 	-- put it into the connection pool of size 512,
 	-- with 0 idle timeout
 	local ok, err = red:set_keepalive(0, 512)

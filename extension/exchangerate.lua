@@ -1,11 +1,9 @@
--- buyhome <huangqi rhomobi com> 20130321 (v0.5.1)
+-- buyhome <huangqi@rhomobi.com> 20130321 (v0.5.1)
 -- License: same to the Lua one
 -- TODO: copy the LICENSE file
-
 -------------------------------------------------------------------------------
 -- begin of the idea : http://rhomobi.com/topics/
 -- exchangerate costum command of hangxin interface
-
 -- load library
 local JSON = require("cjson");
 local redis = require "resty.redis"
@@ -48,7 +46,6 @@ if not ok then
 	ngx.say(error005)
 	return
 end
-
 function gettoken (id)
 	local basetime = ngx.localtime();
 	local resultCode = 0;
@@ -79,7 +76,6 @@ function gettoken (id)
 		end
 	end
 end
-
 function getpid (tok)
 	local basetime = ngx.localtime();
 	local resultCode = 0;
@@ -117,7 +113,6 @@ function getpid (tok)
 		end
 	end
 end
-
 function exchangerate (pid, tok, command)
 	local basetime = ngx.localtime();
 	local errorcodeNo404 = 404;
@@ -148,11 +143,9 @@ function exchangerate (pid, tok, command)
 		return errorcodeNo404, status
 	end
 end
-
 if ngx.var.request_method == "POST" then
 	ngx.exit(ngx.HTTP_FORBIDDEN);
 end
-
 if ngx.var.request_method == "GET" then
 	local commandexrate = {"xs fsc 100cny/" .. ngx.var.currency};
 	local resultCode1, token = gettoken(sbeId)

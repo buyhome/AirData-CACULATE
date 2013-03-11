@@ -1,11 +1,9 @@
--- buyhome <huangqi rhomobi com> 20130321 (v0.5.1)
+-- buyhome <huangqi@rhomobi.com> 20130321 (v0.5.1)
 -- License: same to the Lua one
 -- TODO: copy the LICENSE file
-
 -------------------------------------------------------------------------------
 -- begin of the idea : http://rhomobi.com/topics/
 -- QTE costum command of hangxin interface
-
 -- load library
 local JSON = require("cjson");
 local redis = require "resty.redis"
@@ -35,20 +33,17 @@ end
 memc:set_timeout(1000) -- 1 sec
 -- Sets the timeout (in ms) protection for subsequent operations, including the connect method.
 red:set_timeout(600)
-
 local ok, err = red:connect("127.0.0.1", 6379)
 if not ok then
 	ngx.say("failed to connect: ", err)
 	return
 end
-
 local ok, err = memc:connect("127.0.0.1", 11211)
 if not ok then
 	local error005 = JSON.encode({ ["errorcode"] = 005, ["description"] = "failed to connect huangqiCache/v0.5.1: " .. err});
 	ngx.say(error005)
 	return
 end
-
 function gettoken (id)
 	local basetime = ngx.localtime();
 	local resultCode = 0;
@@ -79,7 +74,6 @@ function gettoken (id)
 		end
 	end
 end
-
 function getpid (tok)
 	local basetime = ngx.localtime();
 	local resultCode = 0;
@@ -117,7 +111,6 @@ function getpid (tok)
 		end
 	end
 end
-
 function QTEdata (pid, tok, command)
 	local basetime = ngx.localtime();
 	local errorcodeNo404 = 404;
@@ -178,11 +171,9 @@ function QTEdata (pid, tok, command)
 		return errorcodeNo404, status
 	end
 end
-
 if ngx.var.request_method == "POST" then
 	ngx.exit(ngx.HTTP_FORBIDDEN);
 end
-
 if ngx.var.request_method == "GET" then
 	-- local basetime = ngx.localtime();
 	-- local commandtax = {"av:canlax/1may/ca", "sd1y1", "qte:/cz"};
