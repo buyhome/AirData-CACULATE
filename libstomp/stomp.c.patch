@@ -1,0 +1,64 @@
+Index: src/stomp.c
+===================================================================
+--- src/stomp.c	(revision 85)
++++ src/stomp.c	(working copy)
+@@ -15,6 +15,11 @@
+  *  limitations under the License.
+  */
+ 
++#if defined(__i386__)
++#include <unistd.h>
++typedef off_t	off64_t;
++#endif
++
+ #include <stdlib.h>
+ #include <string.h>
+ #include "apr.h"
+@@ -35,7 +40,7 @@
+ 	//
+ 	// Allocate the connection and a memory pool for the connection.
+ 	//
+-	connection = apr_pcalloc(pool, sizeof(connection));
++	connection = apr_pcalloc(pool, sizeof(stomp_connection));
+ 	if( connection == NULL )
+ 		return APR_ENOMEM;
+    
+@@ -55,8 +60,9 @@
+    // Get the Socket Info
+    rc = apr_socket_addr_get(&connection->remote_sa, APR_REMOTE, connection->socket);
+ 	CHECK_SUCCESS;
+-   rc = apr_sockaddr_ip_get(&connection->remote_ip, connection->remote_sa);
+-	CHECK_SUCCESS;
++//   rc = apr_sockaddr_ip_get(&connection->remote_ip, connection->remote_sa);
++//	CHECK_SUCCESS;
++   connection->remote_ip = connection->remote_sa->hostname;
+    rc = apr_socket_addr_get(&connection->local_sa, APR_LOCAL, connection->socket);
+ 	CHECK_SUCCESS;
+    rc = apr_sockaddr_ip_get(&connection->local_ip, connection->local_sa);
+@@ -436,4 +442,4 @@
+ #undef CHECK_SUCCESS
+    *frame = f;
+ 	return APR_SUCCESS;
+-}
+\ No newline at end of file
++}
+Index: src/stomp.h
+===================================================================
+--- src/stomp.h	(revision 85)
++++ src/stomp.h	(working copy)
+@@ -37,7 +37,7 @@
+    char *command;
+    apr_hash_t *headers;
+    char *body;
+-   int body_length;
++   long body_length;
+ } stomp_frame;
+ 
+ 
+@@ -52,4 +52,4 @@
+ }
+ #endif
+ 
+-#endif  /* ! STOMP_H */
+\ No newline at end of file
++#endif  /* ! STOMP_H */

@@ -1,3 +1,11 @@
+-- buyhome <huangqi@rhomobi.com> 20130321 (v0.5.1)
+-- License: same to the Lua one
+-- TODO: copy the LICENSE file
+
+-------------------------------------------------------------------------------
+-- begin of the idea : http://rhomobi.com/topics/23
+-- FARE data-base interface
+
 -- load library
 local redis = require "resty.redis"
 -- ready to connect to master redis.
@@ -10,7 +18,7 @@ end
 -- Sets the timeout (in ms) protection for subsequent operations, including the connect method.
 red:set_timeout(600)
 
-local ok, err = red:connect("127.0.0.1", 6379)
+local ok, err = red:connect("127.0.0.1", 6366)
 if not ok then
 	ngx.say("failed to connect: ", err)
 	return
@@ -31,7 +39,7 @@ if ngx.var.request_method == "POST" then
 		-- Maybe 1000000 process POST faredata
 		local tmprandom = math.random(1,1000000);
 		local content = JSON.decode(pcontent);
-		
+
 		-- Check baseSEGMENTS's S_NUMBER.
 		local cscount = 0;
 		for idx, value in ipairs(content.SEGMENTS) do
@@ -61,11 +69,12 @@ if ngx.var.request_method == "POST" then
 			-- Add oraclefids to protect the farekey is unique.
 			local farekey = ngx.md5(tmprandom .. ngx.now() .. oraclefids .. content.ORG .. content.DST .. content.BASE_AIRLINE .. content.CITY_PATH .. content.SELL_START_DATE .. content.SELL_END_DATE .. content.TRAVELER_TYPE_ID);
 			local cavhcmd = content.ORG .. content.DST .. content.BASE_AIRLINE;
+			local avhmulti = content.ORG .. "/" .. content.DST .. "/" .. content.BASE_AIRLINE .. "/";
 			ngx.print("AVHCMD is: ", cavhcmd);
 			ngx.print("\r\n---------------------\r\n");
 			ngx.print(farekey);
 			ngx.print("\r\n---------------------\r\n");
-			
+
 			local getfidres, getfiderr = red:get("fare:" .. farekey .. ":id")
 			if not getfidres then
 				ngx.say("failed to get " .. "fare:" .. farekey .. ":id: ", getfiderr)
@@ -82,10 +91,10 @@ if ngx.var.request_method == "POST" then
 					ngx.say("failed to INCR fare: ", cerror);
 					return
 				end
-				
+
 				ngx.say("INCR fare result: ", farecounter);
 				ngx.print("\r\n---------------------\r\n");
-				
+
 				local resultsetnx, fiderror = red:setnx("fare:" .. farekey .. ":id", farecounter)
 				if not resultsetnx then
 					ngx.say("failed to SETNX fid: ", fiderror);
@@ -104,9 +113,9 @@ if ngx.var.request_method == "POST" then
 				-- Get the fid = fare:[farekey]:id
 				ngx.say("The real fare.id is fid: ", fid);
 				ngx.print("\r\n---------------------\r\n");
-				
+
 				-- baseFARE information.
-				local resbasefare, bferror = red:mset("fare:" .. fid .. ":AVHCMD", cavhcmd, "fare:" .. fid .. ":ORGDST", content.ORG .. content.DST, "fare:" .. fid .. ":BASE_AIRLINE", content.BASE_AIRLINE, "fare:" .. fid .. ":CITY_PATH", content.CITY_PATH, "fare:" .. fid .. ":SELL_START_DATE", content.SELL_START_DATE, "fare:" .. fid .. ":SELL_END_DATE", content.SELL_END_DATE, "fare:" .. fid .. ":TRAVELER_TYPE_ID", content.TRAVELER_TYPE_ID, "fare:" .. fid .. ":S_NUMBER", content.S_NUMBER, "fare:" .. fid .. ":POLICY_ID", content.POLICY_ID, "fare:" .. fid .. ":CURRENCY_CODE", content.CURRENCY_CODE, "fare:" .. fid .. ":PRICE", content.PRICE, "fare:" .. fid .. ":CHILD_PRICE", content.CHILD_PRICE, "fare:" .. fid .. ":MIN_TRAVELER_COUNT", content.MIN_TRAVELER_COUNT)
+				local resbasefare, bferror = red:mset("fare:" .. fid .. ":AVHCMD", avhmulti, "fare:" .. fid .. ":ORGDST", content.ORG .. content.DST, "fare:" .. fid .. ":BASE_AIRLINE", content.BASE_AIRLINE, "fare:" .. fid .. ":CITY_PATH", content.CITY_PATH, "fare:" .. fid .. ":SELL_START_DATE", content.SELL_START_DATE, "fare:" .. fid .. ":SELL_END_DATE", content.SELL_END_DATE, "fare:" .. fid .. ":TRAVELER_TYPE_ID", content.TRAVELER_TYPE_ID, "fare:" .. fid .. ":S_NUMBER", content.S_NUMBER, "fare:" .. fid .. ":POLICY_ID", content.POLICY_ID, "fare:" .. fid .. ":CURRENCY_CODE", content.CURRENCY_CODE, "fare:" .. fid .. ":PRICE", content.PRICE, "fare:" .. fid .. ":CHILD_PRICE", content.CHILD_PRICE, "fare:" .. fid .. ":MIN_TRAVELER_COUNT", content.MIN_TRAVELER_COUNT)
 				if not resbasefare then
 					ngx.say("failed to MSET basefare info: ", bferror);
 					return
@@ -116,20 +125,30 @@ if ngx.var.request_method == "POST" then
 					ngx.say("failed to SET AVHCMD: ", avherr);
 					return
 				end
-				local cityres, cityerr = red:sadd("ORGDST:" .. content.ORG .. content.DST, fid)
+				local cityres, cityerr = red:sadd("ORGDST:" .. content.ORG .. content.DST .. ":FID", fid)
 				if not cityres then
 					ngx.say("failed to SET ORGDST: ", cityerr);
 					return
-				end
-				local trares, traerr = red:sadd("TRAVELER:" .. content.TRAVELER_TYPE_ID, fid)
-				if not trares then
-					ngx.say("failed to SET TRAVELER_TYPE_ID: ", traerr);
-					return
-				end
-				local snumres, snumerr = red:sadd("S_NUMBER:" .. content.S_NUMBER, fid)
-				if not snumres then
-					ngx.say("failed to SET S_NUMBER: ", snumerr);
-					return
+				else
+					-- change Caculate structure @20130306
+					local snumres, snumerr = red:sadd("ORGDST:" .. content.ORG .. content.DST .. ":S_NUMBER:" .. content.S_NUMBER, fid)
+					if not snumres then
+						ngx.say("failed to SET S_NUMBER: ", snumerr);
+						return
+					end
+					local trares, traerr = red:sadd("ORGDST:" .. content.ORG .. content.DST .. ":TRAVELER:" .. content.TRAVELER_TYPE_ID, fid)
+					if not trares then
+						ngx.say("failed to SET TRAVELER_TYPE_ID: ", traerr);
+						return
+					end
+					--[[
+					-- destroy 20130308 if content.AIRLINE is null, i will get the fid' AVHCMD (CAN/LAX/CZ/ etc.)
+					local cityres, cityerr = red:sadd("ORGDST:" .. content.ORG .. content.DST .. ":CMD", cavhcmd)
+					if not cityres then
+						ngx.say("failed to SET ORGDST'S CMD: ", cityerr);
+						return
+					end
+					--]]
 				end
 				-- sort fid by MIN_TRAVELER_COUNT
 				local mtcres, mtcerr = red:zadd("fare:MIN_TRAVELER_COUNT", content.MIN_TRAVELER_COUNT, fid)
@@ -197,12 +216,21 @@ if ngx.var.request_method == "POST" then
 								ngx.print("\r\n+++++++++\r\n");
 							end
 						end
+						-- HASHES FARE_ID
+						if key == "FARE_ID" then
+							local farehkey = string.sub(string.format("%011d", value1), 1, 8);
+							local res, err = red:hmset("PERIODS:fid:" .. farehkey, value1, fid)
+							if not res then
+								ngx.say("failed to hmset the hashes data : [PERIODS:fid:" .. farehkey .. "]", err);
+								return
+							end
+						end
 					end
 					pcount = pcount + 1;
 					ngx.print(pcount);
 					ngx.print("\r\n+++++++++\r\n");
 				end
-				
+
 				-- baseSEGMENTS information.
 				local scount = 1;
 				for idx, value in ipairs(content.SEGMENTS) do
@@ -216,19 +244,27 @@ if ngx.var.request_method == "POST" then
 								return
 							end
 						end
+						if key == "BUNKLEVEL" then
+							-- change Caculate structure @20130306
+							local res, err = red:sadd("ORGDST:" .. content.ORG .. content.DST .. ":BUNKLEVEL:" .. value1, fid)
+							if not res then
+								ngx.say("failed to SET BUNKLEVEL for Caculate: ", err);
+								return
+							end
+						end
 					end
 					scount = scount + 1;
 					ngx.print(scount);
 					ngx.print("\r\n+++++++++\r\n");
 				end
-			
+
 			else
 				ngx.print("The FARE had already been stored!");
 				ngx.print("\r\n---------------------\r\n");
 				ngx.print("fare:" .. farekey .. ":id: ", getfidres);
 				ngx.print("\r\n---------------------\r\n");
 			end
---[[			
+--[[
 			ngx.print(content.OP);
 			ngx.print("\r\n---------------------\r\n");
 			ngx.print(content.LINE_TYPE);
@@ -315,7 +351,7 @@ if ngx.var.request_method == "POST" then
 			-- ngx.print(content.RULE);
 		end
 	end
-	
+
 	-- put it into the connection pool of size 512,
 	-- with 0 idle timeout
 	local ok, err = red:set_keepalive(0, 512)
