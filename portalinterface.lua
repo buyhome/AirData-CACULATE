@@ -508,30 +508,35 @@ if ngx.var.request_method == "POST" then
 								while cwindexi <= cwindexs do
 									-- ngx.say("avh:" .. ckey .. ":" .. itemcount .. ":segid:" .. scount, value1.cangwei_data[cwindexi], value1.cangwei_index[cwindexi]);
 									-- sort cangwei_index by cangwei_data
-									local cangweiscore = cwexchange(value1.cangwei_data[cwindexi]);
+									local cangweiscore = tonumber(cwexchange(value1.cangwei_data[cwindexi]));
 									-- ngx.say(cangweiscore);
-									local cwres, cwerr = csd:zadd("avh:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":cw", tonumber(cangweiscore), value1.cangwei_index[cwindexi])
-									if not cwres then
-										ngx.say("failed to zadd the cangwei sortdatas:[avhs:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":cw]", cwerr);
-										return
-									else
-										-- with the fare Oracle dataset is biger more so all of avhids will be used for next caculation.
-										-- but it'll use much more memory, I suppose to caculate data-avh before Portal.lua in the further development
-										-- cangwei_data >= 1
-										local kcwres, kcwerr = csd:zrangebyscore("avh:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":cw", 1, "+inf")
-										if not kcwres then
-											ngx.say("failed to get the available cangwei_index", kcwerr);
+									if cangweiscore ~= 0 then
+										local cwres, cwerr = csd:zadd("avh:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":cw", cangweiscore, value1.cangwei_index[cwindexi])
+										if not cwres then
+											ngx.say("failed to zadd the cangwei sortdatas:[avhs:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":cw]", cwerr);
 											return
+										--[[
+										-- Not do following code by cangweiscore
 										else
-											-- ngx.print(kcwres);
-											-- ngx.print("\r\n---------------------\r\n");
-											for kcw, vcw in ipairs(kcwres) do
-												local res, err = csd:sadd("avh:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":kcw", vcw)
-												if not res then
-													ngx.say("failed to SET avh:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":kcw", err);
-													return
+											-- with the fare Oracle dataset is biger more so all of avhids will be used for next caculation.
+											-- but it'll use much more memory, I suppose to caculate data-avh before Portal.lua in the further development
+											-- cangwei_data >= 1
+											local kcwres, kcwerr = csd:zrangebyscore("avh:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":cw", 1, "+inf")
+											if not kcwres then
+												ngx.say("failed to get the available cangwei_index", kcwerr);
+												return
+											else
+												-- ngx.print(kcwres);
+												-- ngx.print("\r\n---------------------\r\n");
+												for kcw, vcw in ipairs(kcwres) do
+													local res, err = csd:sadd("avh:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":kcw", vcw)
+													if not res then
+														ngx.say("failed to SET avh:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":kcw", err);
+														return
+													end
 												end
 											end
+										--]]
 										end
 									end
 									cwindexi = cwindexi + 1;
