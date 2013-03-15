@@ -57,7 +57,7 @@ if not csd then
 end
 -- Sets the timeout (in ms) protection for subsequent operations, including the connect method.
 csd:set_timeout(600)
-local csdok, csderr = csd:connect("127.0.0.1", 6388)
+local csdok, csderr = csd:connect("127.0.0.1", 63286)
 if not csdok then
 	ngx.say(error004("failed to connect Caculate server: ", csderr))
 	return
