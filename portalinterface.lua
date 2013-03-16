@@ -343,7 +343,9 @@ if ngx.var.request_method == "POST" then
 								-- ngx.say(ngx.md5(JSON.encode(tmpfres)));
 								-- ngx.print(ngx.md5(ckey .. "_" .. JSON.encode(tmpfres)));
 								-- ngx.print("\r\n----------ready togo-----------\r\n");
-								local fresmd5 = ngx.md5(ckey .. "_" .. JSON.encode(tmpfres));
+								local md5fres = ngx.md5(JSON.encode(tmpfres));
+								-- change the fresmd5 NOT encode_base64.
+								local fresmd5 = ngx.md5(ckey .. "_" .. md5fres);
 								local fresid = "";
 								-- Get the ID of the fresmd5
 								local getfidres, getfiderr = csd:get("fres:" .. fresmd5 .. ":id")
@@ -422,9 +424,9 @@ if ngx.var.request_method == "POST" then
 										ngx.say(error004("failed to hset the hashes data : [fres:" .. fresid .. ":fid" .. "_" .. v .."]", err));
 										return
 									end
-									local res, err = csd:sadd("cac:" .. ckey .. ":freskey", ngx.md5(JSON.encode(tmpfres)))
+									local res, err = csd:sadd("cac:" .. ckey .. ":freskey", md5fres)
 									if not res then
-										ngx.say(error004("failed to set the cac:" .. ckey .. ":freskey[" .. ngx.md5(JSON.encode(tmpfres)) .. "]", err));
+										ngx.say(error004("failed to set the cac:" .. ckey .. ":freskey[" .. md5fres .. "]", err));
 										return
 									end
 								end
@@ -511,6 +513,7 @@ if ngx.var.request_method == "POST" then
 									local cangweiscore = tonumber(cwexchange(value1.cangwei_data[cwindexi]));
 									-- ngx.say(cangweiscore);
 									if cangweiscore ~= 0 then
+									-- close the Check of cangweiscore 0
 										local cwres, cwerr = csd:zadd("avh:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":cw", cangweiscore, value1.cangwei_index[cwindexi])
 										if not cwres then
 											ngx.say("failed to zadd the cangwei sortdatas:[avhs:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":cw]", cwerr);
@@ -558,15 +561,18 @@ if ngx.var.request_method == "POST" then
 							table.insert(tmpavhres, { string.upper(airportpath) })
 							-- ngx.say(tmpavhres);
 							-- ngx.say(itemcount);
+							-- avh result caculate for avhkey.
 							local res, err = csd:sadd("cac:" .. ckey .. ":" .. ngx.md5(JSON.encode(tmpavhres)) .. ":avhid", itemcount)
 							if not res then
 								ngx.say(error004("failed to set the data : [cac:" .. ckey .. ":" .. ngx.md5(JSON.encode(tmpavhres)) .. ":avhid]", err));
 								return
-							end
-							local res, err = csd:sadd("cac:" .. ckey .. ":avhkey", ngx.md5(JSON.encode(tmpavhres)))
-							if not res then
-								ngx.say(error004("failed to set the cac:" .. ckey .. ":avhkey[" .. ngx.md5(JSON.encode(tmpavhres)) .. "]", err));
-								return
+							else
+								-- store the avhkey.
+								local res, err = csd:sadd("cac:" .. ckey .. ":avhkey", ngx.md5(JSON.encode(tmpavhres)))
+								if not res then
+									ngx.say(error004("failed to set the cac:" .. ckey .. ":avhkey[" .. ngx.md5(JSON.encode(tmpavhres)) .. "]", err));
+									return
+								end
 							end
 							itemcount = itemcount + 1;
 							-- ngx.print(itemcount);
@@ -592,35 +598,62 @@ if ngx.var.request_method == "POST" then
 										return
 									else
 										-- foreach avhid
-										for ak, av in pairs(smemres) do
-											ngx.print(av);
-											ngx.print("\r\n++++avhid++++\r\n");
-										end
-									end
-								end
-								--[[
-								local smemres, smemerr = red:smembers("CACULATE:" .. ckey .. ":diffFAIR")
-								if not smemres then
-									ngx.say("failed to smembers CACULATE:" .. ckey .. ":diffFAIR", smemerr);
-									return
-								else
-									-- following Check if the pairs can be treated as a table
-									for k, v in pairs(smemres) do
-										local farehkey = string.sub(string.format("%011d", v), 1, 8);
-										local res, err = red:hget("PERIODS:fid:" .. farehkey, v)
-										if not res then
-											ngx.say("failed to HGET PERIODS:fid: " .. farehkey, err);
-											return
-										else
-											local resc, errc = red:sadd("CACULATE:" .. ckey .. ":PERIODS", res)
-											if not resc then
-												ngx.say("failed to SET CACULATE:" .. ckey .. ":PERIODS", errc);
+										for fk, fv in pairs(smemres) do
+											-- ngx.print(fv);
+											-- ngx.print("\r\n++++avhid++++\r\n");
+											local res, err = csd:get("fres:" .. ngx.md5(ckey .. "_" .. v) .. ":id")
+											if not res then
+												ngx.say("failed to get fres:" .. ngx.md5(ckey .. "_" .. v) .. ":id", err);
 												return
+											else
+												local fid, frr = csd:hvals("fres:" .. res .. ":fid")
+												if not fid then
+													ngx.say("failed to hvals fres:" .. res .. ":fid", frr);
+													return
+												else
+													local fididxs = table.getn(fid);
+													local fididxi = 1;
+													while fididxi <= fididxs do
+														local bunktable = JSON.decode(fid[fididxi]);
+														local bunkidxs = table.getn(bunktable);
+														local bunkidxi = 1;
+														local rm = true;
+														while bunkidxi <= bunkidxs do
+															-- ngx.print(bunktable[bunkidxi][1]);
+															-- ngx.print("\r\n++++cangwei_index++++\r\n");
+															local tmpscore = "";
+															local cwscore, cwerrs = csd:zscore("avh:" .. ckey .. ":" .. fv .. ":" .. bunkidxi .. ":cw", bunktable[bunkidxi][1])
+															if not cwscore then
+																ngx.say("failed to zscore the cangwei sortdatas:[avh:" .. ckey .. ":" .. fv .. ":" .. bunkidxi .. ":cw]", cwerrs);
+																return
+															else
+																-- ngx.say(cwscore);
+																if tonumber(cwscore) == nil then
+																	tmpscore = 0;
+																	rm = false;
+																else
+																	tmpscore = tonumber(cwscore);
+																end
+																local r, e = csd:zadd("cac:" .. ckey .. ":res:" .. fv .. ":" .. fididxi .. ":cw", tmpscore, bunktable[bunkidxi][1])
+																if not r then
+																	ngx.say("failed to zadd the cangwei sortdatas:[cac:" .. ckey .. ":res:" .. fv .. ":" .. fididxi .. ":cw]", e);
+																	return
+																end
+															end
+															bunkidxi = bunkidxi + 1;
+														end
+														-- echo the cac:res
+														if rm == false then
+															ngx.print("cac:" .. ckey .. ":res:" .. fv .. ":" .. fididxi .. ":cw");
+															ngx.print("\r\n----------ready to rm-----------\r\n");
+														end
+														fididxi = fididxi + 1;
+													end
+												end
 											end
 										end
 									end
 								end
-								--]]
 							end
 						end
 					end
