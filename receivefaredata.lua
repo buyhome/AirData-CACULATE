@@ -29,17 +29,13 @@ local JSON = require("cjson");
 if ngx.var.request_method == "GET" then
         ngx.exit(ngx.HTTP_FORBIDDEN);
 end
-
 if ngx.var.request_method == "POST" then
-
 	ngx.req.read_body();
 	local pcontent = ngx.req.get_body_data();
 	if pcontent then
-
 		-- Maybe 1000000 process POST faredata
 		local tmprandom = math.random(1,1000000);
 		local content = JSON.decode(pcontent);
-
 		-- Check baseSEGMENTS's S_NUMBER.
 		local cscount = 0;
 		for idx, value in ipairs(content.SEGMENTS) do
@@ -58,7 +54,6 @@ if ngx.var.request_method == "POST" then
 		end
 		ngx.print(oraclefids);
 		ngx.print("\r\n---------------------\r\n");
-
 		-- Check if S_NUMBER NOT baseSEGMENTS' number Or P_NUMBER NOT farePERIODS' number?
 		if (cscount ~= tonumber(content.S_NUMBER) or cpcount ~= tonumber(content.P_NUMBER)) then
 			ngx.print("Please Check if S_NUMBER NOT baseSEGMENTS' number Or P_NUMBER NOT farePERIODS' number!");
@@ -70,11 +65,11 @@ if ngx.var.request_method == "POST" then
 			local farekey = ngx.md5(tmprandom .. ngx.now() .. oraclefids .. content.ORG .. content.DST .. content.BASE_AIRLINE .. content.CITY_PATH .. content.SELL_START_DATE .. content.SELL_END_DATE .. content.TRAVELER_TYPE_ID);
 			local cavhcmd = content.ORG .. content.DST .. content.BASE_AIRLINE;
 			local avhmulti = content.ORG .. "/" .. content.DST .. "/" .. content.BASE_AIRLINE .. "/";
+			local fid = "";
 			ngx.print("AVHCMD is: ", cavhcmd);
 			ngx.print("\r\n---------------------\r\n");
 			ngx.print(farekey);
 			ngx.print("\r\n---------------------\r\n");
-
 			local getfidres, getfiderr = red:get("fare:" .. farekey .. ":id")
 			if not getfidres then
 				ngx.say("failed to get " .. "fare:" .. farekey .. ":id: ", getfiderr)
@@ -82,7 +77,6 @@ if ngx.var.request_method == "POST" then
 			end
 			ngx.print(getfidres);
 			ngx.print("\r\n---------------------\r\n");
-
 			if tonumber(getfidres) == nil then
 				-- fare:id INCR
 				-- local farecounter, cerror = red:incr("next.fare.id")
@@ -91,20 +85,16 @@ if ngx.var.request_method == "POST" then
 					ngx.say("failed to INCR fare: ", cerror);
 					return
 				end
-
 				ngx.say("INCR fare result: ", farecounter);
 				ngx.print("\r\n---------------------\r\n");
-
 				local resultsetnx, fiderror = red:setnx("fare:" .. farekey .. ":id", farecounter)
 				if not resultsetnx then
 					ngx.say("failed to SETNX fid: ", fiderror);
 					return
 				end
-
 				ngx.say("SETNX fid result: ", resultsetnx);
 				ngx.print("\r\n---------------------\r\n");
 				-- if resultsetnx ~= 1 that is SETNX is NOT sucess.
-				local fid = "";
 				if resultsetnx == 1 then
 					fid = farecounter;
 				else
@@ -113,7 +103,6 @@ if ngx.var.request_method == "POST" then
 				-- Get the fid = fare:[farekey]:id
 				ngx.say("The real fare.id is fid: ", fid);
 				ngx.print("\r\n---------------------\r\n");
-
 				-- baseFARE information.
 				local resbasefare, bferror = red:mset("fare:" .. fid .. ":AVHCMD", avhmulti, "fare:" .. fid .. ":ORGDST", content.ORG .. content.DST, "fare:" .. fid .. ":BASE_AIRLINE", content.BASE_AIRLINE, "fare:" .. fid .. ":CITY_PATH", content.CITY_PATH, "fare:" .. fid .. ":SELL_START_DATE", content.SELL_START_DATE, "fare:" .. fid .. ":SELL_END_DATE", content.SELL_END_DATE, "fare:" .. fid .. ":TRAVELER_TYPE_ID", content.TRAVELER_TYPE_ID, "fare:" .. fid .. ":S_NUMBER", content.S_NUMBER, "fare:" .. fid .. ":POLICY_ID", content.POLICY_ID, "fare:" .. fid .. ":CURRENCY_CODE", content.CURRENCY_CODE, "fare:" .. fid .. ":PRICE", content.PRICE, "fare:" .. fid .. ":CHILD_PRICE", content.CHILD_PRICE, "fare:" .. fid .. ":MIN_TRAVELER_COUNT", content.MIN_TRAVELER_COUNT)
 				if not resbasefare then
@@ -230,7 +219,6 @@ if ngx.var.request_method == "POST" then
 					ngx.print(pcount);
 					ngx.print("\r\n+++++++++\r\n");
 				end
-
 				-- baseSEGMENTS information.
 				local scount = 1;
 				for idx, value in ipairs(content.SEGMENTS) do
@@ -257,7 +245,6 @@ if ngx.var.request_method == "POST" then
 					ngx.print(scount);
 					ngx.print("\r\n+++++++++\r\n");
 				end
-
 			else
 				ngx.print("The FARE had already been stored!");
 				ngx.print("\r\n---------------------\r\n");
@@ -285,7 +272,6 @@ if ngx.var.request_method == "POST" then
 			ngx.print("\r\n---------------------\r\n");
 			ngx.print(content.TRAVELER_TYPE_ID);
 			ngx.print("\r\n---------------------\r\n");
-
 			-- ADD LIMITEDWEEKS so content.PERIODS changed to be table.
 			for idx, value in ipairs(content.PERIODS) do
 				for key, value1 in pairs(value) do
@@ -326,13 +312,29 @@ if ngx.var.request_method == "POST" then
 					end
 				end
 			end
-			for idx, value in ipairs(content.ALLOW_FLIGHT) do
-				ngx.print(value);
-				ngx.print("\r\n---------------------\r\n");
+			-- sets of FLIGHT by 0 = ALLOW_FLIGHT
+			if content.ALLOW_FLIGHT ~= nil then
+				for idx, value in ipairs(content.ALLOW_FLIGHT) do
+					-- ngx.print(value);
+					-- ngx.print("\r\n---------------------\r\n");
+					local res, err = red:sadd("fare:" .. fid .. ":FLIGHT:0", value)
+					if not res then
+						ngx.say("failed to sadd the fare:" .. fid .. ":FLIGHT:0", err);
+						return
+					end
+				end
 			end
-			for idx, value in ipairs(content.NOT_ALLOW_FLIGHT) do
-				ngx.print(value);
-				ngx.print("\r\n---------------------\r\n");
+			-- sets of FLIGHT by 1 = NOT_ALLOW_FLIGHT
+			if content.NOT_ALLOW_FLIGHT ~=nil then
+				for idx, value in ipairs(content.NOT_ALLOW_FLIGHT) do
+					-- ngx.print(value);
+					-- ngx.print("\r\n---------------------\r\n");
+					local res, err = red:sadd("fare:" .. fid .. ":FLIGHT:1", value)
+					if not res then
+						ngx.say("failed to sadd the fare:" .. fid .. ":FLIGHT:1", err);
+						return
+					end
+				end
 			end
 			ngx.print(content.MIN_TRAVELER_COUNT);
 			ngx.print("\r\n---------------------\r\n");
@@ -351,7 +353,6 @@ if ngx.var.request_method == "POST" then
 			-- ngx.print(content.RULE);
 		end
 	end
-
 	-- put it into the connection pool of size 512,
 	-- with 0 idle timeout
 	local ok, err = red:set_keepalive(0, 512)
