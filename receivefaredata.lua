@@ -18,7 +18,7 @@ end
 -- Sets the timeout (in ms) protection for subsequent operations, including the connect method.
 red:set_timeout(600)
 
-local ok, err = red:connect("127.0.0.1", 6366)
+local ok, err = red:connect("127.0.0.1", 6355)
 if not ok then
 	ngx.say("failed to connect: ", err)
 	return
@@ -219,6 +219,46 @@ if ngx.var.request_method == "POST" then
 					ngx.print(pcount);
 					ngx.print("\r\n+++++++++\r\n");
 				end
+				if content.SEGMENTS[1].LIMITEDTIMEINDEX ~= nil then
+					local limtimei = content.SEGMENTS[1].LIMITEDTIMEINDEX;
+					local limtimed = content.SEGMENTS[1].LIMITEDTIMEDATA;
+					local timeidxi = 1;
+					local timeidxs = table.getn(limtimei);
+					while timeidxi <= timeidxs do
+						-- hashes of TIME by 1 = LIMITEDTIME
+						local res, err = red:hset("fare:" .. fid .. ":TIME:1:index", timeidxi, limtimei[timeidxi])
+						if not res then
+							ngx.say("failed to hset the hashes data : [fare:" .. fid .. ":TIME:1:index]", err);
+							return
+						end
+						local res, err = red:hset("fare:" .. fid .. ":TIME:1:data", timeidxi, limtimed[timeidxi])
+						if not res then
+							ngx.say("failed to hset the hashes data : [fare:" .. fid .. ":TIME:1:data]", err);
+							return
+						end
+						timeidxi = timeidxi + 1;
+					end
+				end
+				if content.SEGMENTS[1].ALLOWTIMEINDEX ~= nil then
+					local alltimei = content.SEGMENTS[1].ALLOWTIMEINDEX;
+					local alltimed = content.SEGMENTS[1].ALLOWTIMEDATA;
+					local timeidxi = 1;
+					local timeidxs = table.getn(alltimei);
+					while timeidxi <= timeidxs do
+						-- hashes of TIME by 0 = ALLOWTIME
+						local res, err = red:hset("fare:" .. fid .. ":TIME:0:index", timeidxi, alltimei[timeidxi])
+						if not res then
+							ngx.say("failed to hset the hashes data : [fare:" .. fid .. ":TIME:1:index]", err);
+							return
+						end
+						local res, err = red:hset("fare:" .. fid .. ":TIME:0:data", timeidxi, alltimed[timeidxi])
+						if not res then
+							ngx.say("failed to hset the hashes data : [fare:" .. fid .. ":TIME:1:data]", err);
+							return
+						end
+						timeidxi = timeidxi + 1;
+					end
+				end
 				-- baseSEGMENTS information.
 				local scount = 1;
 				for idx, value in ipairs(content.SEGMENTS) do
@@ -244,6 +284,30 @@ if ngx.var.request_method == "POST" then
 					scount = scount + 1;
 					ngx.print(scount);
 					ngx.print("\r\n+++++++++\r\n");
+				end
+				-- sets of FLIGHT by 0 = ALLOW_FLIGHT
+				if content.ALLOW_FLIGHT ~= nil then
+					for idx, value in ipairs(content.ALLOW_FLIGHT) do
+						-- ngx.print(value);
+						-- ngx.print("\r\n---------------------\r\n");
+						local res, err = red:sadd("fare:" .. fid .. ":FLIGHT:0", value)
+						if not res then
+							ngx.say("failed to sadd the fare:" .. fid .. ":FLIGHT:0", err);
+							return
+						end
+					end
+				end
+				-- sets of FLIGHT by 1 = NOT_ALLOW_FLIGHT
+				if content.NOT_ALLOW_FLIGHT ~=nil then
+					for idx, value in ipairs(content.NOT_ALLOW_FLIGHT) do
+						-- ngx.print(value);
+						-- ngx.print("\r\n---------------------\r\n");
+						local res, err = red:sadd("fare:" .. fid .. ":FLIGHT:1", value)
+						if not res then
+							ngx.say("failed to sadd the fare:" .. fid .. ":FLIGHT:1", err);
+							return
+						end
+					end
 				end
 			else
 				ngx.print("The FARE had already been stored!");
@@ -309,30 +373,6 @@ if ngx.var.request_method == "POST" then
 					if (key ~= "LIMITEDTIMEINDEX" and key ~= "LIMITEDTIMEDATA" and key ~= "ALLOWTIMEINDEX" and key ~= "ALLOWTIMEDATA") then
 						ngx.print(key, ":", value1);
 						ngx.print("\r\n---------------------\r\n");
-					end
-				end
-			end
-			-- sets of FLIGHT by 0 = ALLOW_FLIGHT
-			if content.ALLOW_FLIGHT ~= nil then
-				for idx, value in ipairs(content.ALLOW_FLIGHT) do
-					-- ngx.print(value);
-					-- ngx.print("\r\n---------------------\r\n");
-					local res, err = red:sadd("fare:" .. fid .. ":FLIGHT:0", value)
-					if not res then
-						ngx.say("failed to sadd the fare:" .. fid .. ":FLIGHT:0", err);
-						return
-					end
-				end
-			end
-			-- sets of FLIGHT by 1 = NOT_ALLOW_FLIGHT
-			if content.NOT_ALLOW_FLIGHT ~=nil then
-				for idx, value in ipairs(content.NOT_ALLOW_FLIGHT) do
-					-- ngx.print(value);
-					-- ngx.print("\r\n---------------------\r\n");
-					local res, err = red:sadd("fare:" .. fid .. ":FLIGHT:1", value)
-					if not res then
-						ngx.say("failed to sadd the fare:" .. fid .. ":FLIGHT:1", err);
-						return
 					end
 				end
 			end
