@@ -1,0 +1,155 @@
+curl -u admin:admin --connect-timeout 1 --max-time 1 "http://10.128.34.251:8161/api/message/ticketFare?type=queue&clientId=ngx136&Timeouts=1"
+
+
+{
+    "PNumber": 4,
+    "SNumber": 0,
+    "airPortPath": "SHA-CAN",
+    "allowFlights": [
+        "CZ1000",
+        "CZ1234"
+    ],
+    "baseAirLine": "A",
+    "childPrice": -1,
+    "cityPath": "SHA-CAN",
+    "currencyCode": "USD",
+    "dst": "CAN",
+    "lineType": 1,
+    "minTravelerCount": 1,
+    "notAllowFlights": [
+        "CZ1001",
+        "CZ1243"
+    ],
+    "op": 0,
+    "org": "SHA",
+    "policyId": 12600,
+    "price": 100,
+    "sellEndDate": "20130506",
+    "sellStartDate": "20130301",
+    "ticketPeriods": [
+        {
+            "backLimitedWeeks": [],
+            "endDate": "20130506",
+            "fareId": 3660402,
+            "goLimitedWeeks": [
+                {
+                    "weeks": [
+                        "2",
+                        "4",
+                        "6"
+                    ]
+                }
+            ],
+            "startDate": "20130312"
+        },
+        {
+            "backLimitedWeeks": [],
+            "endDate": "20130610",
+            "fareId": 3660402,
+            "goLimitedWeeks": [
+                {
+                    "weeks": [
+                        "2",
+                        "4",
+                        "6"
+                    ]
+                }
+            ],
+            "startDate": "20130610"
+        },
+        {
+            "backLimitedWeeks": [],
+            "endDate": "20130705",
+            "fareId": 3660402,
+            "goLimitedWeeks": [
+                {
+                    "weeks": [
+                        "2",
+                        "4",
+                        "6"
+                    ]
+                }
+            ],
+            "startDate": "20130705"
+        },
+        {
+            "backLimitedWeeks": [],
+            "endDate": "20130715",
+            "fareId": 3660402,
+            "goLimitedWeeks": [
+                {
+                    "weeks": [
+                        "2",
+                        "4",
+                        "6"
+                    ]
+                }
+            ],
+            "startDate": "20130715"
+        }
+    ],
+    "ticketSegments": [
+        {
+            "allowTimeIndex": [
+                {
+                    "endDate": "59400",
+                    "startDate": "57600"
+                },
+                {
+                    "endDate": "54000",
+                    "startDate": "30600"
+                },
+                {
+                    "endDate": "54000",
+                    "startDate": "30600"
+                },
+                {
+                    "endDate": "54000",
+                    "startDate": "30600"
+                },
+                {
+                    "endDate": "59400",
+                    "startDate": "57600"
+                },
+                {
+                    "endDate": "59400",
+                    "startDate": "57600"
+                }
+            ],
+            "arrAirPort": "CAN",
+            "bunk": "W",
+            "bunkLevel": 3,
+            "carrier": "CX",
+            "depAirPort": "SHA",
+            "dstCity": "CAN",
+            "limitedTimeIndex": [
+                {
+                    "endDate": "54000",
+                    "startDate": "30600"
+                },
+                {
+                    "endDate": "59400",
+                    "startDate": "57600"
+                },
+                {
+                    "endDate": "54000",
+                    "startDate": "30600"
+                },
+                {
+                    "endDate": "54000",
+                    "startDate": "30600"
+                },
+                {
+                    "endDate": "59400",
+                    "startDate": "57600"
+                },
+                {
+                    "endDate": "59400",
+                    "startDate": "57600"
+                }
+            ],
+            "orgCity": "SHA"
+        }
+    ],
+    "travelerTypeId": 8
+}
