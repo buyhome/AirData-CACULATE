@@ -26,6 +26,7 @@ Get the fid = fare:[farekey]:id
 
 #解析Json赋值
 1、插入basefare information.
+
 2、插入baseSEGMENTS information.（hashes）
 
 #如何为字符串获取唯一标识
@@ -63,7 +64,7 @@ ZBE国际机票接口是针对大型OTA网站推出的产品，XX提供国际机
 #应用对象
 大型OTA网站：拥有一定量的用户群体，行业内有一定知名度。
 
-#支持功能 
+#支持功能
 
 1、国际机票单程、往返价格实时查询
 
