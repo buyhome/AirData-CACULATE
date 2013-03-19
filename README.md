@@ -6,31 +6,29 @@ International freight data operation
 
 
 #数据校验
-判断SEGMENTS的航段数量
-判断farePERIODS的数量
-
-同时满足后继续
+判断SEGMENTS的航段数量&判断farePERIODS的数量，同时满足后继续
 
 #计算farekey
 
 oraclefids+ORG+DST+BASE_AIRLINE+CITY_PATH+SELL_START_DATE+SELL_END_DATE+TRAVELER_TYPE_ID
 
 #get对应farekey的id
+
+```bash
 if nil then 
 red:incr("next.fare.id")
 red:setnx("fare:" .. farekey .. ":id", farecounter)
-判断setnx的执行结果Get the fid = fare:[farekey]:id
+```
+判断setnx的执行结果
+```bash
+Get the fid = fare:[farekey]:id
+```
 
 #解析Json赋值
 1、插入basefare information.
 2、插入baseSEGMENTS information.（hashes）
 
-#
-
-
-
-#题外话：如何为字符串获取唯一标识
-```bash
+#如何为字符串获取唯一标识
 
 在标签的例子里，我们用到了标签ID，却没有提到ID从何而来。基本上你得为每个加入系统的标签分配一个唯一标识。你也希望在多个客户端同时试着添加同样的标签时不要出现竞争的情况。此外，如果标签已存在，你希望返回他的ID，否则创建一个新的唯一标识并将其与此标签关联。
 
@@ -56,21 +54,27 @@ SET tag:b840fc02d524045429941cc15f59e41cb7be6c52:id 123456
 下面关联标签和新的ID，(注意用到一个新的命令)
 SETNX tag:b840fc02d524045429941cc15f59e41cb7be6c52:id 123456。如果另一个客户端比当前客户端更快，SETNX将不会设置key。而且，当key被成功设置时SETNX返回1，否则返回0。那么…让我们再做最后一步运算。
 如果SETNX返回1（key设置成功）则将123456返回给调用者，这就是我们的标签ID，否则执行GET tag:b840fc02d524045429941cc15f59e41cb7be6c52:id 并将其结果返回给调用者。
-```
 
 
 #TO DO
 
 ZBE国际机票接口是针对大型OTA网站推出的产品，XX提供国际机票数据查询接口，需要各OTA网站进行二次开发，来获取XX的实时国际机票信息，实现机票的查询与预订等功能。
 
-## 应用对象
+#应用对象
 大型OTA网站：拥有一定量的用户群体，行业内有一定知名度。
 
-## 支持功能 
->1、国际机票单程、往返价格实时查询
->2、国际机票不同旅客类型价格实时查询
->3、国际机票儿童价格及税费实时查询
->4、支持加价调价功能
->5、国际机票多航班选择预订
->6、国际机票预订时验证舱位
->7、税费实时查询
+#支持功能 
+
+1、国际机票单程、往返价格实时查询
+
+2、国际机票不同旅客类型价格实时查询
+
+3、国际机票儿童价格及税费实时查询
+
+4、支持加价调价功能
+
+5、国际机票多航班选择预订
+
+6、国际机票预订时验证舱位
+
+7、税费实时查询
