@@ -1,11 +1,9 @@
 -- buyhome <huangqi@rhomobi.com> 20130321 (v0.5.1)
 -- License: same to the Lua one
 -- TODO: copy the LICENSE file
-
 -------------------------------------------------------------------------------
 -- begin of the idea : http://rhomobi.com/topics/23
 -- FARE data-base interface
-
 -- load library
 local redis = require "resty.redis"
 -- ready to connect to master redis.
@@ -14,16 +12,13 @@ if not red then
 	ngx.say("failed to instantiate redis: ", err)
 	return
 end
-
 -- Sets the timeout (in ms) protection for subsequent operations, including the connect method.
 red:set_timeout(600)
-
-local ok, err = red:connect("127.0.0.1", 6355)
+local ok, err = red:connect("127.0.0.1", 6366)
 if not ok then
 	ngx.say("failed to connect: ", err)
 	return
 end
-
 local JSON = require("cjson");
 
 if ngx.var.request_method == "GET" then

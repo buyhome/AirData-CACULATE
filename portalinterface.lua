@@ -453,132 +453,141 @@ if ngx.var.request_method == "POST" then
 						for idx, value in ipairs(avcontent.avItems) do
 							-- ngx.print(value.s_number);
 							-- ngx.print("\r\n+++++++++\r\n");
-							local scount = 1;
-							-- tmpavhres means the temp avh res
-							local tmpavhres = {};
-							local airportpath = "";
-							local airport1 = "";
-							local airport2 = "";
-							for key, value1 in ipairs(value.segments) do
-								if value1.carrier == JSON.null then
-									table.insert(tmpavhres, { string.upper(content.AIRLINE) })
-								else
-									table.insert(tmpavhres, { string.sub(string.upper(value1.carrier), 1, 2) })
-								end
-								if airport2 == value1.orgcity then
-									airport1 = "";
-								else
-									if scount == 1 then
-										airport1 = value1.orgcity;
-									else
-										-- dstcity is null
-										airport1 = "//" .. value1.orgcity;
-									end
-								end
-								airport2 = value1.dstcity;
-								for skey, value2 in pairs(value1) do
-									if ( skey ~= "cangwei_index" and skey ~= "cangwei_data" and skey ~= "cangwei_subclass_index" and skey ~= "cangwei_subclass_data" and skey ~= "selectedClass" and skey ~= "class" and skey ~= "cangwei_index_sort" and skey ~= "cangwei_data_sort" ) then
-										-- ngx.print("(fres:" .. itemcount .. ":segments:" .. scount .. ") -- " .. skey, ":", value2);
-										-- ngx.print("\r\n---------------------\r\n");
-										local val = "";
-										-- exchange the null value2 to ""
-										if value2 ~= JSON.null then
-											val = value2;
-										end
-										local res, err = csd:hset("avh:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":seg", skey, val)
-										if not res then
-											ngx.say(error004("failed to hset the hashes data:[avhs:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":seg]", err));
-											return
-										end
-									end
-									--[[
-									-- if ( skey == "cangwei_index" and skey == "cangwei_data" ) then
-									if skey == "cangwei_index" then
-										for kc, vc in pairs(value2) do
-											ngx.print(kc, vc);
-											ngx.print("\r\n----------cangwei_index-----------\r\n");
-										end
-										ngx.print(value2[1]);
-										ngx.print("\r\n----------cangwei_index-----------\r\n");
-									end
-									--]]
-									if skey == "airline" then
-										local res, err = red:sadd("CACULATE:" .. ckey .. ":" .. itemcount .. ":flt", value2)
-										if not res then
-											ngx.say(error004("failed to sadd the sets data:[CACULATE:" .. ckey .. ":" .. itemcount .. ":flt]", err));
-											return
-										end
-									end
-								end
-								-- ngx.say("+++++++++++++++++++++++");
-								-- ngx.say("avh:" .. ckey .. ":" .. itemcount .. ":segid:" .. scount, value1.cangwei_data[1], value1.cangwei_index[1]);
-								local cwindexs = table.getn(value1.cangwei_index);
-								local cwindexi = 1;
-								while cwindexi <= cwindexs do
-									-- ngx.say("avh:" .. ckey .. ":" .. itemcount .. ":segid:" .. scount, value1.cangwei_data[cwindexi], value1.cangwei_index[cwindexi]);
-									-- sort cangwei_index by cangwei_data
-									local cangweiscore = tonumber(cwexchange(value1.cangwei_data[cwindexi]));
-									-- ngx.say(cangweiscore);
-									if cangweiscore ~= 0 then
-									-- close the Check of cangweiscore 0
-										local cwres, cwerr = csd:zadd("avh:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":cw", cangweiscore, value1.cangwei_index[cwindexi])
-										if not cwres then
-											ngx.say("failed to zadd the cangwei sortdatas:[avhs:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":cw]", cwerr);
-											return
-										--[[
-										-- Not do following code by cangweiscore
-										else
-											-- with the fare Oracle dataset is biger more so all of avhids will be used for next caculation.
-											-- but it'll use much more memory, I suppose to caculate data-avh before Portal.lua in the further development
-											-- cangwei_data >= 1
-											local kcwres, kcwerr = csd:zrangebyscore("avh:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":cw", 1, "+inf")
-											if not kcwres then
-												ngx.say("failed to get the available cangwei_index", kcwerr);
-												return
-											else
-												-- ngx.print(kcwres);
-												-- ngx.print("\r\n---------------------\r\n");
-												for kcw, vcw in ipairs(kcwres) do
-													local res, err = csd:sadd("avh:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":kcw", vcw)
-													if not res then
-														ngx.say("failed to SET avh:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":kcw", err);
-														return
-													end
-												end
-											end
-										--]]
-										end
-									end
-									cwindexi = cwindexi + 1;
-								end
-								airportpath = airportpath .. airport1 .. "-" .. airport2;
-								local res, err = csd:set("avh:" .. ckey .. ":" .. itemcount .. ":s_number", scount)
-								if not res then
-									ngx.say(error004("failed to hset the s_number data : [avhs:" .. ckey .. ":" .. itemcount .. ":s_number]", err));
-									return
-								else
-									scount = scount + 1;
-								end
-								-- ngx.print(scount);
-								-- ngx.print("\r\n++++scount+++++\r\n");
-							end
-							-- ngx.say(airportpath);
-							-- ngx.say(string.len(airportpath));
-							table.insert(tmpavhres, { string.upper(content.AIRLINE) })
-							table.insert(tmpavhres, { string.upper(airportpath) })
-							-- ngx.say(tmpavhres);
-							-- ngx.say(itemcount);
-							-- avh result caculate for avhkey.
-							local res, err = csd:sadd("cac:" .. ckey .. ":" .. ngx.md5(JSON.encode(tmpavhres)) .. ":avhid", itemcount)
-							if not res then
-								ngx.say(error004("failed to set the data : [cac:" .. ckey .. ":" .. ngx.md5(JSON.encode(tmpavhres)) .. ":avhid]", err));
+							-- ngx.print(value.segments[1].depTime);
+							-- ngx.print("\r\n+++++depTime+++++\r\n");
+							local deptime = tonumber(value.segments[1].depTime);
+							local dpres, dperr = red:zadd("CACULATE:" .. ckey .. ":dep", deptime, itemcount)
+							if not dpres then
+								ngx.say("failed to zadd the depTime sortavhids:[CACULATE:" .. ckey .. ":dep]", dperr);
 								return
 							else
-								-- store the avhkey.
-								local res, err = csd:sadd("cac:" .. ckey .. ":avhkey", ngx.md5(JSON.encode(tmpavhres)))
+								local scount = 1;
+								-- tmpavhres means the temp avh res
+								local tmpavhres = {};
+								local airportpath = "";
+								local airport1 = "";
+								local airport2 = "";
+								for key, value1 in ipairs(value.segments) do
+									if value1.carrier == JSON.null then
+										table.insert(tmpavhres, { string.upper(content.AIRLINE) })
+									else
+										table.insert(tmpavhres, { string.sub(string.upper(value1.carrier), 1, 2) })
+									end
+									if airport2 == value1.orgcity then
+										airport1 = "";
+									else
+										if scount == 1 then
+											airport1 = value1.orgcity;
+										else
+											-- dstcity is null
+											airport1 = "//" .. value1.orgcity;
+										end
+									end
+									airport2 = value1.dstcity;
+									for skey, value2 in pairs(value1) do
+										if ( skey ~= "cangwei_index" and skey ~= "cangwei_data" and skey ~= "cangwei_subclass_index" and skey ~= "cangwei_subclass_data" and skey ~= "selectedClass" and skey ~= "class" and skey ~= "cangwei_index_sort" and skey ~= "cangwei_data_sort" ) then
+											-- ngx.print("(fres:" .. itemcount .. ":segments:" .. scount .. ") -- " .. skey, ":", value2);
+											-- ngx.print("\r\n---------------------\r\n");
+											local val = "";
+											-- exchange the null value2 to ""
+											if value2 ~= JSON.null then
+												val = value2;
+											end
+											local res, err = csd:hset("avh:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":seg", skey, val)
+											if not res then
+												ngx.say(error004("failed to hset the hashes data:[avhs:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":seg]", err));
+												return
+											end
+										end
+										--[[
+										-- if ( skey == "cangwei_index" and skey == "cangwei_data" ) then
+										if skey == "cangwei_index" then
+											for kc, vc in pairs(value2) do
+												ngx.print(kc, vc);
+												ngx.print("\r\n----------cangwei_index-----------\r\n");
+											end
+											ngx.print(value2[1]);
+											ngx.print("\r\n----------cangwei_index-----------\r\n");
+										end
+										--]]
+										if skey == "airline" then
+											local res, err = red:sadd("CACULATE:" .. ckey .. ":" .. itemcount .. ":flt", value2)
+											if not res then
+												ngx.say(error004("failed to sadd the sets data:[CACULATE:" .. ckey .. ":" .. itemcount .. ":flt]", err));
+												return
+											end
+										end
+									end
+									-- ngx.say("+++++++++++++++++++++++");
+									-- ngx.say("avh:" .. ckey .. ":" .. itemcount .. ":segid:" .. scount, value1.cangwei_data[1], value1.cangwei_index[1]);
+									local cwindexs = table.getn(value1.cangwei_index);
+									local cwindexi = 1;
+									while cwindexi <= cwindexs do
+										-- ngx.say("avh:" .. ckey .. ":" .. itemcount .. ":segid:" .. scount, value1.cangwei_data[cwindexi], value1.cangwei_index[cwindexi]);
+										-- sort cangwei_index by cangwei_data
+										local cangweiscore = tonumber(cwexchange(value1.cangwei_data[cwindexi]));
+										-- ngx.say(cangweiscore);
+										if cangweiscore ~= 0 then
+										-- close the Check of cangweiscore 0
+											local cwres, cwerr = csd:zadd("avh:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":cw", cangweiscore, value1.cangwei_index[cwindexi])
+											if not cwres then
+												ngx.say("failed to zadd the cangwei sortdatas:[avhs:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":cw]", cwerr);
+												return
+											--[[
+											-- Not do following code by cangweiscore
+											else
+												-- with the fare Oracle dataset is biger more so all of avhids will be used for next caculation.
+												-- but it'll use much more memory, I suppose to caculate data-avh before Portal.lua in the further development
+												-- cangwei_data >= 1
+												local kcwres, kcwerr = csd:zrangebyscore("avh:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":cw", 1, "+inf")
+												if not kcwres then
+													ngx.say("failed to get the available cangwei_index", kcwerr);
+													return
+												else
+													-- ngx.print(kcwres);
+													-- ngx.print("\r\n---------------------\r\n");
+													for kcw, vcw in ipairs(kcwres) do
+														local res, err = csd:sadd("avh:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":kcw", vcw)
+														if not res then
+															ngx.say("failed to SET avh:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":kcw", err);
+															return
+														end
+													end
+												end
+											--]]
+											end
+										end
+										cwindexi = cwindexi + 1;
+									end
+									airportpath = airportpath .. airport1 .. "-" .. airport2;
+									local res, err = csd:set("avh:" .. ckey .. ":" .. itemcount .. ":s_number", scount)
+									if not res then
+										ngx.say(error004("failed to hset the s_number data : [avhs:" .. ckey .. ":" .. itemcount .. ":s_number]", err));
+										return
+									else
+										scount = scount + 1;
+									end
+									-- ngx.print(scount);
+									-- ngx.print("\r\n++++scount+++++\r\n");
+								end
+								-- ngx.say(airportpath);
+								-- ngx.say(string.len(airportpath));
+								table.insert(tmpavhres, { string.upper(content.AIRLINE) })
+								table.insert(tmpavhres, { string.upper(airportpath) })
+								-- ngx.say(tmpavhres);
+								-- ngx.say(itemcount);
+								-- avh result caculate for avhkey.
+								local res, err = csd:sadd("cac:" .. ckey .. ":" .. ngx.md5(JSON.encode(tmpavhres)) .. ":avhid", itemcount)
 								if not res then
-									ngx.say(error004("failed to set the cac:" .. ckey .. ":avhkey[" .. ngx.md5(JSON.encode(tmpavhres)) .. "]", err));
+									ngx.say(error004("failed to set the data : [cac:" .. ckey .. ":" .. ngx.md5(JSON.encode(tmpavhres)) .. ":avhid]", err));
 									return
+								else
+									-- store the avhkey.
+									local res, err = csd:sadd("cac:" .. ckey .. ":avhkey", ngx.md5(JSON.encode(tmpavhres)))
+									if not res then
+										ngx.say(error004("failed to set the cac:" .. ckey .. ":avhkey[" .. ngx.md5(JSON.encode(tmpavhres)) .. "]", err));
+										return
+									end
 								end
 							end
 							itemcount = itemcount + 1;
