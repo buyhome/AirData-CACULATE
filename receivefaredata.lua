@@ -221,19 +221,21 @@ if ngx.var.request_method == "POST" then
 					local timeidxs = table.getn(limtimei);
 					while timeidxi <= timeidxs do
 						-- hashes of TIME by 1 = LIMITEDTIME
-						local res, err = red:hset("fare:" .. fid .. ":TIME:1:index", timeidxi, limtimei[timeidxi])
+						local res, err = red:zadd("fare:" .. fid .. ":LT:sta", tonumber(limtimei[timeidxi]), timeidxi)
 						if not res then
-							ngx.say("failed to hset the hashes data : [fare:" .. fid .. ":TIME:1:index]", err);
+							ngx.say("failed to sort the LIMITEDTIMEINDEX data : [fare:" .. fid .. ":LT:sta]", err);
 							return
 						end
-						local res, err = red:hset("fare:" .. fid .. ":TIME:1:data", timeidxi, limtimed[timeidxi])
+						local res, err = red:zadd("fare:" .. fid .. ":LT:end", tonumber(limtimed[timeidxi]), timeidxi)
 						if not res then
-							ngx.say("failed to hset the hashes data : [fare:" .. fid .. ":TIME:1:data]", err);
+							ngx.say("failed to sort the LIMITEDTIMEDATA data : [fare:" .. fid .. ":LT:end]", err);
 							return
 						end
 						timeidxi = timeidxi + 1;
 					end
 				end
+				--[[
+				-- Do NOT store the content.SEGMENTS[1].ALLOWTIMEINDEX
 				if content.SEGMENTS[1].ALLOWTIMEINDEX ~= nil then
 					local alltimei = content.SEGMENTS[1].ALLOWTIMEINDEX;
 					local alltimed = content.SEGMENTS[1].ALLOWTIMEDATA;
@@ -254,6 +256,7 @@ if ngx.var.request_method == "POST" then
 						timeidxi = timeidxi + 1;
 					end
 				end
+				--]]
 				-- baseSEGMENTS information.
 				local scount = 1;
 				for idx, value in ipairs(content.SEGMENTS) do
