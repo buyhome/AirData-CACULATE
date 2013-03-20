@@ -11,31 +11,6 @@ local JSON = require("cjson");
 -- originality
 local error001 = JSON.encode({ ["errorcode"] = 001, ["description"] = "NO RESULT"});
 local error002 = JSON.encode({ ["errorcode"] = 002, ["description"] = "Your request time is NOT behind yesterday."});
--- Faredata server error Function
-function error003(des)
-	local res = JSON.encode({ ["errorcode"] = 003, ["description"] = des});
-	return res
-end
--- Caculate server error Function
-function error004(des)
-	local res = JSON.encode({ ["errorcode"] = 004, ["description"] = des});
-	return res
-end
--- Function
-function table_is_empty(t)
-	return next(t)
-end
-function cwexchange(d)
-	if tonumber(d) ~= nil then
-		return d
-	else
-		if tostring(d) == "A" then
-			return "10"
-		else
-			return "0"
-		end
-	end
-end
 -- ready to connect to Faredata server.
 local red, err = redis:new()
 if not red then
@@ -61,6 +36,127 @@ local csdok, csderr = csd:connect("127.0.0.1", 63286)
 if not csdok then
 	ngx.say(error004("failed to connect Caculate server: ", csderr))
 	return
+end
+-- Faredata server error Function
+function error003(des)
+	local res = JSON.encode({ ["errorcode"] = 003, ["description"] = des});
+	return res
+end
+-- Caculate server error Function
+function error004(des)
+	local res = JSON.encode({ ["errorcode"] = 004, ["description"] = des});
+	return res
+end
+-- Function
+function table_is_empty(t)
+	return next(t)
+end
+function cwexchange(d)
+	if tonumber(d) ~= nil then
+		return d
+	else
+		if tostring(d) == "A" then
+			return "10"
+		else
+			return "0"
+		end
+	end
+end
+function cacflt(ckey, fidi, fidj, fv)
+	local krs, ker = red:exists("fare:" .. fidi .. ":FLIGHT:0")
+	if not krs then
+		ngx.say(error003("failed to EXISTS fare:" .. fidi .. ":FLIGHT:0", ker));
+	else
+		if krs == 0 then
+			-- ALLOW_FLIGHT is NOT exist
+			local fltres, flterr = red:sinter("fare:" .. fidi .. ":FLIGHT:1", "CACULATE:" .. ckey .. ":" .. fv .. ":flt")
+			if not fltres then
+				ngx.say(error003("failed to sinter fare:" .. fidi .. ":FLIGHT:1 with & CACULATE:" .. ckey .. ":" .. fv .. ":flt", flterr));
+				return
+			else
+				if table_is_empty(fltres) == nil then
+					local bunktable = JSON.decode(fidj);
+					local bunkidxs = table.getn(bunktable);
+					local bunkidxi = 1;
+					local rm = true;
+					while bunkidxi <= bunkidxs do
+						local tmpscore = "";
+						local cwscore, cwerrs = csd:zscore("avh:" .. ckey .. ":" .. fv .. ":" .. bunkidxi .. ":cw", bunktable[bunkidxi][1])
+						if not cwscore then
+							ngx.say(error004("failed to zscore the cangwei sortdatas:[avh:" .. ckey .. ":" .. fv .. ":" .. bunkidxi .. ":cw]", cwerrs));
+							return
+						else
+							-- ngx.say(cwscore);
+							if tonumber(cwscore) == nil then
+								tmpscore = 0;
+								rm = false;
+							else
+								tmpscore = tonumber(cwscore);
+							end
+							local r, e = csd:zadd("cac:" .. ckey .. ":res:" .. fv .. ":" .. fidi .. ":cw", tmpscore, bunkidxi .. bunktable[bunkidxi][1])
+							if not r then
+								ngx.say(error004("failed to zadd the cangwei sortdatas:[cac:" .. ckey .. ":res:" .. fv .. ":" .. fidi .. ":cw]", e));
+								return
+							end
+						end
+						bunkidxi = bunkidxi + 1;
+					end
+					-- echo the cac:res
+					if rm == false then
+						local dr, de = csd:del("cac:" .. ckey .. ":res:" .. fv .. ":" .. fidi .. ":cw")
+						if not dr then
+							ngx.say(error004("failed to del cac:" .. ckey .. ":res:" .. fv .. ":" .. fidi .. ":cw", de));
+							return
+						end
+					end
+				end
+			end
+		else
+			-- ALLOW_FLIGHT is exist, used for CACULATE:avhid:flt - which
+			local fltres, flterr = red:sdiff("CACULATE:" .. ckey .. ":" .. fv .. ":flt", "fare:" .. fidi .. ":FLIGHT:0")
+			if not fltres then
+				ngx.say(error003("failed to SDIFF fare:" .. fidi .. ":FLIGHT:0 with & CACULATE:" .. ckey .. ":" .. fv .. ":flt", flterr));
+				return
+			else
+				if table_is_empty(fltres) == nil then
+					local bunktable = JSON.decode(fidj);
+					local bunkidxs = table.getn(bunktable);
+					local bunkidxi = 1;
+					local rm = true;
+					while bunkidxi <= bunkidxs do
+						local tmpscore = "";
+						local cwscore, cwerrs = csd:zscore("avh:" .. ckey .. ":" .. fv .. ":" .. bunkidxi .. ":cw", bunktable[bunkidxi][1])
+						if not cwscore then
+							ngx.say(error004("failed to zscore the cangwei sortdatas:[avh:" .. ckey .. ":" .. fv .. ":" .. bunkidxi .. ":cw]", cwerrs));
+							return
+						else
+							-- ngx.say(cwscore);
+							if tonumber(cwscore) == nil then
+								tmpscore = 0;
+								rm = false;
+							else
+								tmpscore = tonumber(cwscore);
+							end
+							local r, e = csd:zadd("cac:" .. ckey .. ":res:" .. fv .. ":" .. fidi .. ":cw", tmpscore, bunkidxi .. bunktable[bunkidxi][1])
+							if not r then
+								ngx.say(error004("failed to zadd the cangwei sortdatas:[cac:" .. ckey .. ":res:" .. fv .. ":" .. fidi .. ":cw]", e));
+								return
+							end
+						end
+						bunkidxi = bunkidxi + 1;
+					end
+					-- echo the cac:res
+					if rm == false then
+						local dr, de = csd:del("cac:" .. ckey .. ":res:" .. fv .. ":" .. fidi .. ":cw")
+						if not dr then
+							ngx.say(error004("failed to del cac:" .. ckey .. ":res:" .. fv .. ":" .. fidi .. ":cw", de));
+							return
+						end
+					end
+				end
+			end
+		end
+	end
 end
 if ngx.var.request_method == "GET" then
 	ngx.exit(ngx.HTTP_FORBIDDEN);
@@ -636,310 +732,69 @@ if ngx.var.request_method == "POST" then
 														-- ngx.print(fid[fididxi]);
 														-- ngx.print(fid[fididxj]);
 														-- ngx.print("\r\n++++cangwei_index++++\r\n");
-														local krs, ker = red:exists("fare:" .. fid[fididxi] .. ":FLIGHT:0")
+														-- local krs, ker = red:exists("fare:" .. fid[fididxi] .. ":FLIGHT:0")
 														local trs, ter = red:exists("fare:" .. fid[fididxi] .. ":LT:sta")
-														if krs and trs then
+														if not trs then
+															ngx.say(error003("failed to EXISTS fare:" .. fid[fididxi] .. ":LT:sta", ter));
+														else
 															if trs == 0 then
-																-- LIMITEDTIME is NOT exist
-																if krs == 0 then
-																	-- ALLOW_FLIGHT is NOT exist
-																	local fltres, flterr = red:sinter("fare:" .. fid[fididxi] .. ":FLIGHT:1", "CACULATE:" .. ckey .. ":" .. fv .. ":flt")
-																	if not fltres then
-																		ngx.say("failed to sinter fare:" .. fid[fididxi] .. ":FLIGHT:1 with & CACULATE:" .. ckey .. ":" .. fv .. ":flt", flterr);
-																		return
-																	else
-																		if table_is_empty(fltres) == nil then
-																			local bunktable = JSON.decode(fid[fididxj]);
-																			local bunkidxs = table.getn(bunktable);
-																			local bunkidxi = 1;
-																			local rm = true;
-																			while bunkidxi <= bunkidxs do
-																				local tmpscore = "";
-																				local cwscore, cwerrs = csd:zscore("avh:" .. ckey .. ":" .. fv .. ":" .. bunkidxi .. ":cw", bunktable[bunkidxi][1])
-																				if not cwscore then
-																					ngx.say("failed to zscore the cangwei sortdatas:[avh:" .. ckey .. ":" .. fv .. ":" .. bunkidxi .. ":cw]", cwerrs);
-																					return
-																				else
-																					-- ngx.say(cwscore);
-																					if tonumber(cwscore) == nil then
-																						tmpscore = 0;
-																						rm = false;
-																					else
-																						tmpscore = tonumber(cwscore);
-																					end
-																					local r, e = csd:zadd("cac:" .. ckey .. ":res:" .. fv .. ":" .. fid[fididxi] .. ":cw", tmpscore, bunkidxi .. bunktable[bunkidxi][1])
-																					if not r then
-																						ngx.say("failed to zadd the cangwei sortdatas:[cac:" .. ckey .. ":res:" .. fv .. ":" .. fid[fididxi] .. ":cw]", e);
-																						return
-																					end
-																				end
-																				bunkidxi = bunkidxi + 1;
-																			end
-																			-- echo the cac:res
-																			if rm == false then
-																				ngx.print("cac:" .. ckey .. ":res:" .. fv .. ":" .. fididxi .. ":cw");
-																				ngx.print("\r\n----------ready to rm-----------\r\n");
-																			end
-																		end
-																	end
-																else
-																	-- ALLOW_FLIGHT is exist, used for CACULATE:avhid:flt - which
-																	local fltres, flterr = red:sdiff("CACULATE:" .. ckey .. ":" .. fv .. ":flt", "fare:" .. fid[fididxi] .. ":FLIGHT:0")
-																	if not fltres then
-																		ngx.say("failed to SDIFF fare:" .. fid[fididxi] .. ":FLIGHT:0 with & CACULATE:" .. ckey .. ":" .. fv .. ":flt", flterr);
-																		return
-																	else
-																		if table_is_empty(fltres) == nil then
-																			local bunktable = JSON.decode(fid[fididxj]);
-																			local bunkidxs = table.getn(bunktable);
-																			local bunkidxi = 1;
-																			local rm = true;
-																			while bunkidxi <= bunkidxs do
-																				local tmpscore = "";
-																				local cwscore, cwerrs = csd:zscore("avh:" .. ckey .. ":" .. fv .. ":" .. bunkidxi .. ":cw", bunktable[bunkidxi][1])
-																				if not cwscore then
-																					ngx.say("failed to zscore the cangwei sortdatas:[avh:" .. ckey .. ":" .. fv .. ":" .. bunkidxi .. ":cw]", cwerrs);
-																					return
-																				else
-																					-- ngx.say(cwscore);
-																					if tonumber(cwscore) == nil then
-																						tmpscore = 0;
-																						rm = false;
-																					else
-																						tmpscore = tonumber(cwscore);
-																					end
-																					local r, e = csd:zadd("cac:" .. ckey .. ":res:" .. fv .. ":" .. fid[fididxi] .. ":cw", tmpscore, bunkidxi .. bunktable[bunkidxi][1])
-																					if not r then
-																						ngx.say("failed to zadd the cangwei sortdatas:[cac:" .. ckey .. ":res:" .. fv .. ":" .. fid[fididxi] .. ":cw]", e);
-																						return
-																					end
-																				end
-																				bunkidxi = bunkidxi + 1;
-																			end
-																			-- echo the cac:res
-																			if rm == false then
-																				ngx.print("cac:" .. ckey .. ":res:" .. fv .. ":" .. fididxi .. ":cw");
-																				ngx.print("\r\n----------ready to rm-----------\r\n");
-																			end
-																		end
-																	end
-																end
+																-- LIMITEDTIME does NOT exist
+																cacflt(ckey, fid[fididxi], fid[fididxj], fv);
 															else
-															-- LIMITEDTIME is exist
-																-- get the avhid's depTime.
+																-- LIMITEDTIME exist
+																-- first to get the avhid's depTime.
 																local tscres, tscerr = red:zscore("CACULATE:" .. ckey .. ":dep", fv)
 																if not tscres then
-																	ngx.say("failed to zscore the avhid's score:[CACULATE:" .. ckey .. ":dep]", tscerr);
+																	ngx.say(error003("failed to zscore the avhid's score:[CACULATE:" .. ckey .. ":dep]", tscerr));
 																	return
 																else
 																	-- sucess to get the avhid's depTime of seg.1
 																	local dt = tonumber(tscres);
+																	-- LT:sta <= depTime
 																	local stares, staerr = red:zrangebyscore("fare:" .. fid[fididxi] .. ":LT:sta", "-inf", dt)
-																	local endres, enderr = red:zrangebyscore("fare:" .. fid[fididxi] .. ":LT:end", dt, "+inf")
-																	if stares and endres then
-																		if table_is_empty(stares) ~= nil and table_is_empty(endres) ~= nil then
-																			-- local st, ste = red:zremrangebyscore("fare:" .. fid[fididxi] .. ":LT:sta", dt, "+inf")
-																			-- local ed, ede = red:zremrangebyscore("fare:" .. fid[fididxi] .. ":LT:end", "-inf", dt)
-																			for k, v in ipairs(stares) do
-																				local r, e = red:sadd("CACULATE:" .. ckey .. ":sta:" .. fid[fididxi], v)
-																				if not r then
-																					ngx.say("failed to SET CACULATE:" .. ckey .. ":sta:" .. fid[fididxi], e);
-																					return
-																				end
-																			end
-																			for k, v in ipairs(endres) do
-																				local r, e = red:sadd("CACULATE:" .. ckey .. ":end:" .. fid[fididxi], v)
-																				if not r then
-																					ngx.say("failed to SET CACULATE:" .. ckey .. ":end:" .. fid[fididxi], e);
-																					return
-																				end
-																			end
-																			local limres, limerr = red:sinter("CACULATE:" .. ckey .. ":sta:" .. fid[fididxi], "CACULATE:" .. ckey .. ":end:" .. fid[fididxi])
-																			if not limres then
-																				ngx.say("failed to sinter CACULATE:" .. ckey .. ":sta&end:" .. fid[fididxi], limerr);
-																				return
-																			else
-																				if table_is_empty(limres) == nil then
-																					if krs == 0 then
-																						-- ALLOW_FLIGHT is NOT exist
-																						local fltres, flterr = red:sinter("fare:" .. fid[fididxi] .. ":FLIGHT:1", "CACULATE:" .. ckey .. ":" .. fv .. ":flt")
-																						if not fltres then
-																							ngx.say("failed to sinter fare:" .. fid[fididxi] .. ":FLIGHT:1 with & CACULATE:" .. ckey .. ":" .. fv .. ":flt", flterr);
-																							return
-																						else
-																							if table_is_empty(fltres) == nil then
-																								local bunktable = JSON.decode(fid[fididxj]);
-																								local bunkidxs = table.getn(bunktable);
-																								local bunkidxi = 1;
-																								local rm = true;
-																								while bunkidxi <= bunkidxs do
-																									local tmpscore = "";
-																									local cwscore, cwerrs = csd:zscore("avh:" .. ckey .. ":" .. fv .. ":" .. bunkidxi .. ":cw", bunktable[bunkidxi][1])
-																									if not cwscore then
-																										ngx.say("failed to zscore the cangwei sortdatas:[avh:" .. ckey .. ":" .. fv .. ":" .. bunkidxi .. ":cw]", cwerrs);
-																										return
-																									else
-																										-- ngx.say(cwscore);
-																										if tonumber(cwscore) == nil then
-																											tmpscore = 0;
-																											rm = false;
-																										else
-																											tmpscore = tonumber(cwscore);
-																										end
-																										local r, e = csd:zadd("cac:" .. ckey .. ":res:" .. fv .. ":" .. fid[fididxi] .. ":cw", tmpscore, bunkidxi .. bunktable[bunkidxi][1])
-																										if not r then
-																											ngx.say("failed to zadd the cangwei sortdatas:[cac:" .. ckey .. ":res:" .. fv .. ":" .. fid[fididxi] .. ":cw]", e);
-																											return
-																										end
-																									end
-																									bunkidxi = bunkidxi + 1;
-																								end
-																								-- echo the cac:res
-																								if rm == false then
-																									ngx.print("cac:" .. ckey .. ":res:" .. fv .. ":" .. fididxi .. ":cw");
-																									ngx.print("\r\n----------ready to rm-----------\r\n");
-																								end
-																							end
-																						end
-																					else
-																						-- ALLOW_FLIGHT is exist, used for CACULATE:avhid:flt - which
-																						local fltres, flterr = red:sdiff("CACULATE:" .. ckey .. ":" .. fv .. ":flt", "fare:" .. fid[fididxi] .. ":FLIGHT:0")
-																						if not fltres then
-																							ngx.say("failed to SDIFF fare:" .. fid[fididxi] .. ":FLIGHT:0 with & CACULATE:" .. ckey .. ":" .. fv .. ":flt", flterr);
-																							return
-																						else
-																							if table_is_empty(fltres) == nil then
-																								local bunktable = JSON.decode(fid[fididxj]);
-																								local bunkidxs = table.getn(bunktable);
-																								local bunkidxi = 1;
-																								local rm = true;
-																								while bunkidxi <= bunkidxs do
-																									local tmpscore = "";
-																									local cwscore, cwerrs = csd:zscore("avh:" .. ckey .. ":" .. fv .. ":" .. bunkidxi .. ":cw", bunktable[bunkidxi][1])
-																									if not cwscore then
-																										ngx.say("failed to zscore the cangwei sortdatas:[avh:" .. ckey .. ":" .. fv .. ":" .. bunkidxi .. ":cw]", cwerrs);
-																										return
-																									else
-																										-- ngx.say(cwscore);
-																										if tonumber(cwscore) == nil then
-																											tmpscore = 0;
-																											rm = false;
-																										else
-																											tmpscore = tonumber(cwscore);
-																										end
-																										local r, e = csd:zadd("cac:" .. ckey .. ":res:" .. fv .. ":" .. fid[fididxi] .. ":cw", tmpscore, bunkidxi .. bunktable[bunkidxi][1])
-																										if not r then
-																											ngx.say("failed to zadd the cangwei sortdatas:[cac:" .. ckey .. ":res:" .. fv .. ":" .. fid[fididxi] .. ":cw]", e);
-																											return
-																										end
-																									end
-																									bunkidxi = bunkidxi + 1;
-																								end
-																								-- echo the cac:res
-																								if rm == false then
-																									ngx.print("cac:" .. ckey .. ":res:" .. fv .. ":" .. fididxi .. ":cw");
-																									ngx.print("\r\n----------ready to rm-----------\r\n");
-																								end
-																							end
-																						end
-																					end
-																				end
-																			end
+																	if not stares then
+																		ngx.say(error003("failed to zrangebyscore the fid's LT:sta:[fare:" .. fid[fididxi] .. ":LT:sta]", staerr));
+																		return
+																	else
+																		-- LT:end >= depTime
+																		local endres, enderr = red:zrangebyscore("fare:" .. fid[fididxi] .. ":LT:end", dt, "+inf")
+																		if not endres then
+																			ngx.say(error003("failed to zrangebyscore the fid's LT:end:[fare:" .. fid[fididxi] .. ":LT:end]", enderr));
+																			return
 																		else
-																		-- fid[fididxi] is ok.
-																			if krs == 0 then
-																				-- ALLOW_FLIGHT is NOT exist
-																				local fltres, flterr = red:sinter("fare:" .. fid[fididxi] .. ":FLIGHT:1", "CACULATE:" .. ckey .. ":" .. fv .. ":flt")
-																				if not fltres then
-																					ngx.say("failed to sinter fare:" .. fid[fididxi] .. ":FLIGHT:1 with & CACULATE:" .. ckey .. ":" .. fv .. ":flt", flterr);
+																			if table_is_empty(stares) ~= nil and table_is_empty(endres) ~= nil then
+																				-- local st, ste = red:zremrangebyscore("fare:" .. fid[fididxi] .. ":LT:sta", dt, "+inf")
+																				-- local ed, ede = red:zremrangebyscore("fare:" .. fid[fididxi] .. ":LT:end", "-inf", dt)
+																				for ksta, vsta in ipairs(stares) do
+																					local res, err = red:sadd("CACULATE:" .. ckey .. ":sta:" .. fid[fididxi], vsta)
+																					if not res then
+																						ngx.say("failed to SET CACULATE:" .. ckey .. ":sta:" .. fid[fididxi], err);
+																						return
+																					end
+																				end
+																				for kend, vend in ipairs(endres) do
+																					local res, err = red:sadd("CACULATE:" .. ckey .. ":end:" .. fid[fididxi], vend)
+																					if not res then
+																						ngx.say("failed to SET CACULATE:" .. ckey .. ":end:" .. fid[fididxi], err);
+																						return
+																					end
+																				end
+																				local limres, limerr = red:sinter("CACULATE:" .. ckey .. ":sta:" .. fid[fididxi], "CACULATE:" .. ckey .. ":end:" .. fid[fididxi])
+																				if not limres then
+																					ngx.say("failed to sinter CACULATE:" .. ckey .. ":sta&end:" .. fid[fididxi], limerr);
 																					return
 																				else
-																					if table_is_empty(fltres) == nil then
-																						local bunktable = JSON.decode(fid[fididxj]);
-																						local bunkidxs = table.getn(bunktable);
-																						local bunkidxi = 1;
-																						local rm = true;
-																						while bunkidxi <= bunkidxs do
-																							local tmpscore = "";
-																							local cwscore, cwerrs = csd:zscore("avh:" .. ckey .. ":" .. fv .. ":" .. bunkidxi .. ":cw", bunktable[bunkidxi][1])
-																							if not cwscore then
-																								ngx.say("failed to zscore the cangwei sortdatas:[avh:" .. ckey .. ":" .. fv .. ":" .. bunkidxi .. ":cw]", cwerrs);
-																								return
-																							else
-																								-- ngx.say(cwscore);
-																								if tonumber(cwscore) == nil then
-																									tmpscore = 0;
-																									rm = false;
-																								else
-																									tmpscore = tonumber(cwscore);
-																								end
-																								local r, e = csd:zadd("cac:" .. ckey .. ":res:" .. fv .. ":" .. fid[fididxi] .. ":cw", tmpscore, bunkidxi .. bunktable[bunkidxi][1])
-																								if not r then
-																									ngx.say("failed to zadd the cangwei sortdatas:[cac:" .. ckey .. ":res:" .. fv .. ":" .. fid[fididxi] .. ":cw]", e);
-																									return
-																								end
-																							end
-																							bunkidxi = bunkidxi + 1;
-																						end
-																						-- echo the cac:res
-																						if rm == false then
-																							ngx.print("cac:" .. ckey .. ":res:" .. fv .. ":" .. fididxi .. ":cw");
-																							ngx.print("\r\n----------ready to rm-----------\r\n");
-																						end
+																					if table_is_empty(limres) == nil then
+																						cacflt(ckey, fid[fididxi], fid[fididxj], fv);
 																					end
 																				end
 																			else
-																				-- ALLOW_FLIGHT is exist, used for CACULATE:avhid:flt - which
-																				local fltres, flterr = red:sdiff("CACULATE:" .. ckey .. ":" .. fv .. ":flt", "fare:" .. fid[fididxi] .. ":FLIGHT:0")
-																				if not fltres then
-																					ngx.say("failed to SDIFF fare:" .. fid[fididxi] .. ":FLIGHT:0 with & CACULATE:" .. ckey .. ":" .. fv .. ":flt", flterr);
-																					return
-																				else
-																					if table_is_empty(fltres) == nil then
-																						local bunktable = JSON.decode(fid[fididxj]);
-																						local bunkidxs = table.getn(bunktable);
-																						local bunkidxi = 1;
-																						local rm = true;
-																						while bunkidxi <= bunkidxs do
-																							local tmpscore = "";
-																							local cwscore, cwerrs = csd:zscore("avh:" .. ckey .. ":" .. fv .. ":" .. bunkidxi .. ":cw", bunktable[bunkidxi][1])
-																							if not cwscore then
-																								ngx.say("failed to zscore the cangwei sortdatas:[avh:" .. ckey .. ":" .. fv .. ":" .. bunkidxi .. ":cw]", cwerrs);
-																								return
-																							else
-																								-- ngx.say(cwscore);
-																								if tonumber(cwscore) == nil then
-																									tmpscore = 0;
-																									rm = false;
-																								else
-																									tmpscore = tonumber(cwscore);
-																								end
-																								local r, e = csd:zadd("cac:" .. ckey .. ":res:" .. fv .. ":" .. fid[fididxi] .. ":cw", tmpscore, bunkidxi .. bunktable[bunkidxi][1])
-																								if not r then
-																									ngx.say("failed to zadd the cangwei sortdatas:[cac:" .. ckey .. ":res:" .. fv .. ":" .. fid[fididxi] .. ":cw]", e);
-																									return
-																								end
-																							end
-																							bunkidxi = bunkidxi + 1;
-																						end
-																						-- echo the cac:res
-																						if rm == false then
-																							ngx.print("cac:" .. ckey .. ":res:" .. fv .. ":" .. fididxi .. ":cw");
-																							ngx.print("\r\n----------ready to rm-----------\r\n");
-																						end
-																					end
-																				end
+																				cacflt(ckey, fid[fididxi], fid[fididxj], fv);
 																			end
 																		end
-																	else
-																		ngx.say(error003("Please Check the Faredata server"));
-																		return
 																	end
 																end
 															end
-														else
-															ngx.say(error003("Please Check the Faredata server"));
-															return
 														end
 														fididxi = fididxi + 2;
 														fididxj = fididxj + 2;
