@@ -316,11 +316,12 @@ if ngx.var.request_method == "POST" then
 					end
 				end
 			end
+			-- declare the result of fids.
+			local fareresult = "";
 			-- Check content.AIRLINE if it is null
 			if content.AIRLINE ~= JSON.null then
 				local cavhcmd = string.upper(content.ORG .. content.DST .. content.AIRLINE);
 				local city = string.upper(content.ORG .. content.DST);
-				local fareresult = "";
 				-- SINTER key [key ...]
 				if content.DIRECT == 1 then
 					ngx.print("\r\n----------content.DIRECT is 1 == all-----------\r\n");

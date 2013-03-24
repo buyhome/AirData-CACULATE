@@ -19,8 +19,8 @@ if not ok then
 	ngx.say("failed to connect: ", err)
 	return
 end
+-- load JSON library
 local JSON = require("cjson");
-
 if ngx.var.request_method == "GET" then
         ngx.exit(ngx.HTTP_FORBIDDEN);
 end
