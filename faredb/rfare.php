@@ -65,6 +65,7 @@ $con->begin("tx4");
 // so we need to ack received messages again
 // before we can receive more (prefetch = 1)
 $mc = count($messages);
+$mcount = $mc;
 if ($mc != 0) {
     foreach($messages as $msg) {
         $con->ack($msg, "tx4");
@@ -85,7 +86,7 @@ foreach($messages as $msg) {
     echo "\t$msg->body\n";
 }
 echo "}\n";
-echo "\t$mc\n";
+echo "\$mcount\n";
 
 //ensure there are no more messages in the queue
 $frame = $con->readFrame();
