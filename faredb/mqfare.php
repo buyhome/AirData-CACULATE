@@ -25,30 +25,31 @@ $con->connect();
 $con->setReadTimeout(1);
 // subscribe to the queue
 $con->subscribe("/queue/ticketFare", array('ack' => 'client','activemq.prefetchSize' => 1 ));
+$txf = 1;
 while (true) {
-	$messages = array();
-	$con->begin("txf");
-	// so we need to ack received messages again
-	// before we can receive more (prefetch = 1)
-	$mc = count($messages);
-	if ($mc != 0) {
-		foreach($messages as $msg) {
-			$con->ack($msg, "txf");
-		}
-	}
-	// now receive more messages
 	// ensure there are messages in the queue
-	$frame = $con->readFrame();
-	if ($frame === false) {
+	$msg = $con->readFrame();
+	if ($msg === false) {
 		echo "No more messages in the queue\n";
 		sleep(5);
 	} else {
-		$con->ack($frame, "txf");
-		array_push($messages, $frame);
-		$con->commit("txf");
+		$messages = array();
+		$con->begin($txf);
+		// so we need to ack received messages again
+		// before we can receive more (prefetch = 1)
+		$mc = count($messages);
+		if ($mc != 0) {
+			foreach($messages as $msg) {
+				$con->ack($msg, $txf);
+			}
+		}
+		$con->ack($msg, $txf);
+		array_push($messages, $msg);
+		$con->commit($txf);
 		foreach($messages as $msg) {
 			echo "$msg->body\n";
 		}
+		$txf = $txf + 1;
 	}
 }
 // disconnect
