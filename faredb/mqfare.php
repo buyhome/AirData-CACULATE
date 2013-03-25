@@ -44,14 +44,23 @@ while (true) {
 		$con->ack($msg);
 		array_push($messages, $msg);
 		//$con->commit($txf);
-		echo "Processed messages {\n";
+		//echo "Processed messages {\n";
 		foreach($messages as $msg) {
 			echo "{$msg->body}\n";
+			postfare($msg->body);
 		}
-		echo "}\n";
+		//echo "}\n";
 		sleep(1);
 	}
 }
 // disconnect
 $con->disconnect();
+function postfare($ary) {
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL, 'http://10.124.20.136/data-base');
+	curl_setopt($ch, CURLOPT_HTTPHEADERS, array('Content-Type: application/json'));
+	curl_setopt($ch, CURLOPT_POST, 1);
+	curl_setopt($ch, CURLOPT_POSTFIELDS, $ary);
+	curl_exec($ch);
+}
 ?>
