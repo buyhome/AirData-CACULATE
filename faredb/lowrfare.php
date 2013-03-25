@@ -19,36 +19,28 @@
 
 // include a library
 require_once ("../Stomp.php");
-
 try {
-
 	// make a connection
 	$con = new Stomp("tcp://10.124.20.49:61613");
 	// connect
 	$con -> connect();
 	$con -> setReadTimeout(1);
 	// subscribe to the queue
-	$con -> subscribe("/queue/gjyj02", array('ack' => 'client', 'activemq.prefetchSize' => 1));
-
+	$con -> subscribe("/queue/ticketFare", array('ack' => 'client', 'activemq.prefetchSize' => 1));
 	while (true) {
-
 		$messages = array();
-
 		if ($con -> hasFrameToRead()) {
 			$frame = $con -> readFrame();
 			if ($frame != NULL) {
 				//print "Received: " . $frame->body . " - time now is " . date("Y-m-d H:i:s"). "\n";
-
 				array_push($messages, $frame);
 				$con -> ack($frame);
 			}
-
 			trace_array($messages);
-
 			if ($con -> hasFrameToRead()) {
 				continue;
 			} else {
-				sleep(30);
+				sleep(5);
 			}
 		} else {
 			print "No frames to read\n";
@@ -57,17 +49,14 @@ try {
 } catch(StompException $e) {
 	die('Connection failed: ' . $e -> getMessage());
 }
-
 // disconnect
 $con -> disconnect();
-
 function trace_array($ary) {
-	$mc = count($ary);
-
+	//$mc = count($ary);
 	//echo "Processed messages {\n";
 	foreach ($ary as $msg) {
 		echo "{$msg->body}\n";
 	}
 	//echo "}\n";
-	echo "{$mc}\n";
+	//echo "{$mc}\n";
 }
