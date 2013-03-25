@@ -48,11 +48,10 @@ echo "}\n";
 // they will be available for consumers after commit
 $con->commit("tx2");
 */
-
+$messages = array();
 /*
 // try to receive some messages
 $con->begin("tx3");
-
 for ($i = 1; $i < 2; $i++) {
     $msg = $con->readFrame();
     array_push($messages, $msg);
@@ -63,7 +62,6 @@ $con->abort("tx3");
 */
 
 $con->begin("tx4");
-$messages = array();
 // so we need to ack received messages again
 // before we can receive more (prefetch = 1)
 $mc = count($messages);
