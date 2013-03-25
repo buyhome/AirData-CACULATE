@@ -14,10 +14,10 @@ if not red then
 	return
 end
 -- Sets the timeout (in ms) protection for subsequent operations, including the connect method.
-red:set_timeout(600)
+red:set_timeout(6000)
 local ok, err = red:connect("127.0.0.1", 6366)
 if not ok then
-	ngx.say("failed to connect: ", err)
+	ngx.say("failed to connect: ", err);
 	return
 end
 local JSON = require("cjson");
@@ -42,7 +42,9 @@ function timecac(st, ed)
 			if lenst ~= lened then
 				return 1, nil
 			else
-				return 0, lenst
+				if lenst ~= 0 then
+					return 0, lenst
+				end
 			end
 		end
 		if st == nil and ed == nil then
@@ -51,7 +53,7 @@ function timecac(st, ed)
 	end
 end
 if ngx.var.request_method == "GET" then
-        ngx.exit(ngx.HTTP_FORBIDDEN);
+	ngx.exit(ngx.HTTP_FORBIDDEN);
 end
 if ngx.var.request_method == "POST" then
 	ngx.req.read_body();
@@ -102,9 +104,11 @@ if ngx.var.request_method == "POST" then
 							end
 						end
 					else
-						if tonumber(alltimesta[1]) > tonumber(alltimeend[1]) then
-							ngx.print(error004);
-							ngx.exit(200);
+						if alllen == 1 then
+							if tonumber(alltimesta[1]) > tonumber(alltimeend[1]) then
+								ngx.print(error004);
+								ngx.exit(200);
+							end
 						end
 					end
 				end
@@ -117,9 +121,11 @@ if ngx.var.request_method == "POST" then
 							end
 						end
 					else
-						if tonumber(limtimesta[1]) > tonumber(limtimeend[1]) then
-							ngx.print(error005);
-							ngx.exit(200);
+						if limlen == 1 then
+							if tonumber(limtimesta[1]) > tonumber(limtimeend[1]) then
+								ngx.print(error005);
+								ngx.exit(200);
+							end
 						end
 					end
 				end
@@ -346,29 +352,34 @@ if ngx.var.request_method == "POST" then
 					end
 					-- LT time zsets
 					if allcac == 0 then
-						for idx = 1, alllen-1 do
-							if tonumber(alltimeend[idx]) < tonumber(alltimesta[idx+1]) then
-								-- ngx.say(alltimeend[idx] .. ":" .. alltimesta[idx+1]);
-								local res, err = red:zadd("fare:" .. fid .. ":LT:sta", tonumber(alltimeend[idx]), idx+1)
-								if not res then
-									ngx.say("failed to sort the LIMITEDTIMEINDEX data : [fare:" .. fid .. ":LT:sta]", err);
-									return
-								end
-								local res, err = red:zadd("fare:" .. fid .. ":LT:end", tonumber(alltimesta[idx+1]), idx+1)
-								if not res then
-									ngx.say("failed to sort the LIMITEDTIMEDATA data : [fare:" .. fid .. ":LT:end]", err);
-									return
+						if alllen > 1 then
+							for idx = 1, alllen-1 do
+								if tonumber(alltimeend[idx]) < tonumber(alltimesta[idx+1]) then
+									-- ngx.say(alltimeend[idx] .. ":" .. alltimesta[idx+1]);
+									local res, err = red:zadd("fare:" .. fid .. ":LT:sta", tonumber(alltimeend[idx]), idx+1)
+									if not res then
+										ngx.say("failed to sort the LIMITEDTIMEINDEX data : [fare:" .. fid .. ":LT:sta]", err);
+										ngx.say("-------------1------------");
+										return
+									end
+									local res, err = red:zadd("fare:" .. fid .. ":LT:end", tonumber(alltimesta[idx+1]), idx+1)
+									if not res then
+										ngx.say("failed to sort the LIMITEDTIMEDATA data : [fare:" .. fid .. ":LT:end]", err);
+										return
+									end
 								end
 							end
 						end
 						local res, err = red:zadd("fare:" .. fid .. ":LT:sta", 0, 1)
 						if not res then
 							ngx.say("failed to sort the LIMITEDTIMEINDEX data : [fare:" .. fid .. ":LT:sta]", err);
+							ngx.say("-------------2------------");
 							return
 						end
 						local res, err = red:zadd("fare:" .. fid .. ":LT:sta", tonumber(alltimeend[alllen]), alllen+1)
 						if not res then
 							ngx.say("failed to sort the LIMITEDTIMEINDEX data : [fare:" .. fid .. ":LT:sta]", err);
+							ngx.say("-------------3------------");
 							return
 						end
 						local res, err = red:zadd("fare:" .. fid .. ":LT:end", tonumber(alltimesta[1]), 1)

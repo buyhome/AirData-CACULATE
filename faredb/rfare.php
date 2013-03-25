@@ -26,7 +26,7 @@ $con->connect();
 $con->setReadTimeout(1);
 
 // subscribe to the queue
-$con->subscribe("/queue/ticketFare", array('ack' => 'client','activemq.prefetchSize' => 1 ));
+$con->subscribe("/queue/gjyj02", array('ack' => 'client','activemq.prefetchSize' => 1 ));
 
 /*
 // try to send some messages
@@ -65,14 +65,13 @@ $con->begin("tx4");
 // so we need to ack received messages again
 // before we can receive more (prefetch = 1)
 $mc = count($messages);
-$mcount = $mc;
 if ($mc != 0) {
     foreach($messages as $msg) {
         $con->ack($msg, "tx4");
     }
 }
 // now receive more messages
-for ($i = 1; $i < 2; $i++) {
+for ($i = 1; $i < 3; $i++) {
     $msg = $con->readFrame();
     $con->ack($msg, "tx4");
     array_push($messages, $msg);
@@ -86,7 +85,7 @@ foreach($messages as $msg) {
     echo "\t$msg->body\n";
 }
 echo "}\n";
-echo "\$mcount\n";
+echo "\$mc\n";
 
 //ensure there are no more messages in the queue
 $frame = $con->readFrame();
