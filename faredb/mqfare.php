@@ -19,12 +19,13 @@
 // include a library
 require_once("../Stomp.php");
 // make a connection
-$con = new Stomp("tcp://10.124.20.49:61613");
+$con = new Stomp("tcp://10.128.34.75:61615");
+//$con = new Stomp("tcp://10.124.20.49:61613");
 // connect
 $con->connect();
 $con->setReadTimeout(1);
 // subscribe to the queue
-$con->subscribe("/queue/ticketFare", array('ack' => 'client','activemq.prefetchSize' => 1 ));
+$con->subscribe("/queue/ifl_fareName1", array('ack' => 'client','activemq.prefetchSize' => 1 ));
 while (true) {
 	// ensure there are messages in the queue
 	$msg = $con->readFrame();

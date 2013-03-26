@@ -176,7 +176,7 @@ if ngx.var.request_method == "POST" then
 					-- ngx.print("\r\n---------------------\r\n");
 					-- ready to store the fare information.
 					-- baseFARE information.
-					local resbasefare, bferror = red:mset("fare:" .. fid .. ":AVHCMD", avhmulti, "fare:" .. fid .. ":ORGDST", content.org .. content.dst, "fare:" .. fid .. ":BASE_AIRLINE", content.baseAirLine, "fare:" .. fid .. ":CITY_PATH", content.airPortPath, "fare:" .. fid .. ":SELL_START_DATE", content.sellStartDate, "fare:" .. fid .. ":SELL_END_DATE", content.sellEndDate, "fare:" .. fid .. ":TRAVELER_TYPE_ID", content.travelerTypeId, "fare:" .. fid .. ":S_NUMBER", content.SNumber, "fare:" .. fid .. ":POLICY_ID", content.policyId, "fare:" .. fid .. ":CURRENCY_CODE", content.currencyCode, "fare:" .. fid .. ":PRICE", content.price, "fare:" .. fid .. ":CHILD_PRICE", content.childPrice, "fare:" .. fid .. ":MIN_TRAVELER_COUNT", content.minTravelerCount)
+					local resbasefare, bferror = red:mset("fare:" .. fid .. ":AVHCMD", avhmulti, "fare:" .. fid .. ":ORGDST", content.org .. content.dst, "fare:" .. fid .. ":BASE_AIRLINE", content.baseAirLine, "fare:" .. fid .. ":CITY_PATH", content.airPortPath, "fare:" .. fid .. ":SELL_START_DATE", content.sellStartDate, "fare:" .. fid .. ":SELL_END_DATE", content.sellEndDate, "fare:" .. fid .. ":TRAVELER_TYPE_ID", content.travelerTypeId, "fare:" .. fid .. ":S_NUMBER", content.SNumber, "fare:" .. fid .. ":POLICY:ID", content.policyId, "fare:" .. fid .. ":CURRENCY_CODE", content.currencyCode, "fare:" .. fid .. ":PRICE", content.price, "fare:" .. fid .. ":CHILD_PRICE", content.childPrice, "fare:" .. fid .. ":MIN_TRAVELER_COUNT", content.minTravelerCount)
 					if not resbasefare then
 						ngx.say("failed to MSET basefare info: ", bferror);
 						return
@@ -439,6 +439,15 @@ if ngx.var.request_method == "POST" then
 					if not plyres then
 						ngx.print(error002("failed to SET POLICY: " .. content.policyId, plyerr));
 						return
+					end
+					-- 20130326
+					-- ticketPolicyFiles information.0
+					for idx, value in pairs(content.ticketPolicyFiles) do
+						local res, err = red:hmset("fare:" .. fid .. ":POLICY:file", idx, value)
+						if not res then
+							ngx.say("failed to hmset the hashes data : [fare:" .. fid .. ":POLICY:file]", err);
+							return
+						end
 					end
 					ngx.print(error000);
 				else

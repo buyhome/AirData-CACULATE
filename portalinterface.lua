@@ -186,7 +186,7 @@ if ngx.var.request_method == "POST" then
 		ngx.print("\r\n---------------------\r\n");
 		ngx.print(content.DIRECT);
 		ngx.print("\r\n---------------------\r\n");
-		if content.DEPARTUREDATE < tonumber(reqdate) then
+		if tonumber(content.DEPARTUREDATE) < tonumber(reqdate) then
 			ngx.print(error002);
 		else
 			-- DEPARTUREDATE to WEEK
