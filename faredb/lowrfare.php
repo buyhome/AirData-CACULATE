@@ -16,34 +16,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 // include a library
 require_once ("../Stomp.php");
 try {
 	// make a connection
-	$con = new Stomp("tcp://10.124.20.49:61613");
+	$con = new Stomp("tcp://10.124.20.49:61612");
 	// connect
 	$con -> connect();
 	$con -> setReadTimeout(1);
 	// subscribe to the queue
 	$con -> subscribe("/queue/ticketFare", array('ack' => 'client', 'activemq.prefetchSize' => 1));
+	$txf = 0;
 	while (true) {
-		$messages = array();
-		if ($con -> hasFrameToRead()) {
-			$frame = $con -> readFrame();
-			if ($frame != NULL) {
-				//print "Received: " . $frame->body . " - time now is " . date("Y-m-d H:i:s"). "\n";
-				array_push($messages, $frame);
-				$con -> ack($frame);
-			}
-			trace_array($messages);
-			if ($con -> hasFrameToRead()) {
-				continue;
-			} else {
-				sleep(5);
-			}
+		//$messages = array();
+		$txf ++;
+		$con->begin($txf);
+		//if ($con -> hasFrameToRead()) {
+		$frame = $con -> readFrame();
+		if ($frame != false && $frame != NULL) {
+			//print "Received: " . $frame->body . " - time now is " . date("Y-m-d H:i:s"). "\n";
+			//array_push($messages, $frame);
+			$con -> ack($frame, $txf);
+			$con->commit($txf);
+			trace_array($frame);
+			sleep(1);
 		} else {
+		//} else {
+			$con->abort($txf);
 			print "No frames to read\n";
+			sleep(5);
 		}
 	}
 } catch(StompException $e) {
@@ -54,9 +55,9 @@ $con -> disconnect();
 function trace_array($ary) {
 	//$mc = count($ary);
 	//echo "Processed messages {\n";
-	foreach ($ary as $msg) {
-		echo "{$msg->body}\n";
-	}
+	//foreach ($ary as $msg) {
+	echo "{$ary->body}\n";
+	//}
 	//echo "}\n";
 	//echo "{$mc}\n";
 }
