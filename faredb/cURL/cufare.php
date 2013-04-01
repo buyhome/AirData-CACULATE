@@ -21,11 +21,11 @@ if (!$ch) {
 	die("Couldn't initialize a cURL handle");
  }
 // set some cURL options
-$ret = curl_setopt($ch, CURLOPT_URL,            		"http://10.124.20.49:8161/demo/message/rhomobile?type=queue&clientId=ngx136&Timeouts=1");
-$ret = curl_setopt($ch, CURLOPT_HEADER,         		1);
-$ret = curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 		1);
-$ret = curl_setopt($ch, CURLOPT_RETURNTRANSFER, 		0);
-$ret = curl_setopt($ch, CURLOPT_TIMEOUT,        		2);
+$ret = curl_setopt($ch, CURLOPT_URL,					"http://10.124.20.49:8161/demo/message/ifl_ticket?type=queue&clientId=ngx136&Timeouts=1");
+$ret = curl_setopt($ch, CURLOPT_HEADER,					1);
+$ret = curl_setopt($ch, CURLOPT_FOLLOWLOCATION,			1);
+$ret = curl_setopt($ch, CURLOPT_RETURNTRANSFER,			0);
+$ret = curl_setopt($ch, CURLOPT_TIMEOUT,				2);
 $ret = curl_setopt($ch, CURLINFO_STARTTRANSFER_TIME,	2);
 
 // execute
@@ -44,10 +44,37 @@ if (empty($ret)) {
 		$http_codes = parse_ini_file("/data/huangqi/stomp/php/examples/faredb/code.ini");
 		// echo results
 		echo "\nThe server responded: ";
-		//echo $ret;
 		//echo "<br/>";
 		echo $info['http_code'] . " " . $http_codes[$info['http_code']];
+		echo "\n";
+		echo $ret;
+		postfare($ret);
 	}
 
+}
+function postfare($ary) {
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL, 'http://10.124.20.136/data-base');
+	//curl_setopt($ch, CURLOPT_HTTPHEADERS, array('Content-Type: application/json'));
+	curl_setopt($ch, CURLOPT_POST, 1);
+	curl_setopt($ch, CURLOPT_POSTFIELDS, $ary);
+	$pet = curl_exec($ch);
+	if (empty($pet)) {
+		// some kind of an error happened
+		die(curl_error($ch));
+		curl_close($ch); // close cURL handler
+	} else {
+		$pinfo = curl_getinfo($ch);
+		curl_close($ch); // close cURL handler
+		if (empty($pinfo['http_code'])) {
+			die("No HTTP code was returned");
+		} else {
+			// load the HTTP codes
+			$http_codes = parse_ini_file("/data/huangqi/stomp/php/examples/faredb/code.ini");
+			// echo results
+			echo "\nThe server responded: ";
+			echo $pinfo['http_code'] . " " . $http_codes[$pinfo['http_code']];
+		}
+	}
 }
 ?>

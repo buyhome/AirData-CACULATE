@@ -1,0 +1,15 @@
+[www@ngxportal faredb]$ /usr/local/webserver/php/bin/php cufare.php
+HTTP/1.1 200 OK
+Set-Cookie: JSESSIONID=6j66vtapbhgyq4qqrgt3ykun;Path=/demo
+Expires: Thu, 01 Jan 1970 00:00:00 GMT
+Content-Type: text/plain;charset=ISO-8859-1
+destination: queue://ifl_ticket
+id: ID:I51AT6TJ6O12G8O-60848-1364464352029-5:1:1:1:5
+Transfer-Encoding: chunked
+Server: Jetty(7.6.7.v20120910)
+
+{"PNumber":1,"SNumber":1,"airPortPath":"CAN-FBM","allowFlights":[],"baseAirLine":"CX","childPrice":100,"cityPath":"CAN-FBM","currencyCode":"USD","dst":"FBM","exchangerateValue":0,"lineType":1,"minTravelerCount":1,"notAllowFlights":[],"op":0,"org":"CAN","policyId":9550,"price":100,"sellEndDate":"20130228","sellStartDate":"20130201","ticketPeriods":[{"backLimitedWeeks":[],"endDate":"20130228","fareId":4894797,"goLimitedWeeks":[{"weeks":["2","3","4","5"]}],"startDate":"20130131"}],"ticketPolicyFiles":{"advanceDay":-1,"agentFee":0,"airPartCount":1,"aircoCode":"CX","aircoName":"????","allowChangeDate":"","allowFlight":"","allowRefund":"","allowRefundForPart":"N","allowSpa":"N","backAllowTime":"","backDate":"2013-01-30?2014-02-28;","backNotAllowTime":"","backWeeks":"","baseAgentFee":0,"billingType":48,"bookingValue":-1,"changeCalcType":"","changeFees":0,"changeRefundRemark":"","changeRefundRemarkDate":"","changeRefundRemarkTicket":"","changeUnit":"","childDiscount":0,"childDiscountType":17,"childDiscountUnit":"USD","childPrice":-1,"currencyCode":"","currencyName":"??","fareBase":"","fareId":4894797,"fareType":44,"goAllowTime":"","goNotAllowTime":"","goWeeks":"????????","infantDiscount":0,"infantDiscountType":17,"infantDiscountUnit":"USD","infantPrice":-1,"isOpenTicket":"N","logoFileId":51,"luggageAmount":0,"luggagePtotleWeight":0,"luggagePweight":0,"maxStayTime":1,"maxStayUnit":"Y","minStayTime":-1,"minStayUnit":"D","minTravelerCount":1,"missedFees":0,"missedUnit":"","notAllowFlight":"","originalFilename":"","policyFilePathId":0,"preAgentValue":0,"price":100,"priceClassId":13,"refundCalcType":"","refundCalcTypeForPart":"","refundFees":0,"refundFeesForPart":0,"refundTicketType":"","refundTicketTypeForPart":"","refundUnit":"","refundUnitForPart":"","sellEndDate":"2013-02-28","sellStartDate":"2013-02-01","stayWeeks":"","tcode":"","tourEndDate":"2013-11-14","tourStartDate":"2013-02-01","transitCount":0,"travelerTypeId":8,"unChildDiscount":0,"unChildDiscountType":17,"unChildDiscountUnit":"USD","unChildPrice":-1},"ticketSegments":[{"arrAirPort":"FBM","backEndTime":{"allowTime":[],"limitedTime":[]},"backStartTime":{"allowTime":[],"limitedTime":[]},"bunk":"F","bunkLevel":5,"carrier":"CX","depAirPort":"CAN","dstCity":"FBM","goEndTime":{"allowTime":[],"limitedTime":[]},"goStartTime":{"allowTime":[],"limitedTime":[]},"orgCity":"CAN"}],"travelerTypeId":8}
+The server responded: 200 OK
+11
+
+The server responded: 200 OK[www@ngxportal faredb]$
