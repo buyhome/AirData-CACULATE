@@ -16,21 +16,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-$ch = curl_init(); // create cURL handle (ch)
-if (!$ch) {
-	die("Couldn't initialize a cURL handle");
+ function curlget() {
+	$ch = curl_init(); // create cURL handle (ch)
+	if (!$ch) {
+		die("Couldn't initialize a cURL handle");
+	 }
+	// set some cURL options
+	$ret = curl_setopt($ch, CURLOPT_URL,				 "http://10.124.20.49:8161/demo/message/ifl_ticket?type=queue&clientId=ngx136&Timeouts=1");
+	//$ret = curl_setopt($ch, CURLOPT_HEADER,				 1);
+	$ret = curl_setopt($ch, CURLOPT_FOLLOWLOCATION,		 1);
+	$ret = curl_setopt($ch, CURLOPT_RETURNTRANSFER,		 1);
+	$ret = curl_setopt($ch, CURLOPT_TIMEOUT,			 2);
+	$ret = curl_setopt($ch, CURLINFO_STARTTRANSFER_TIME, 2);
+	// execute
+	$ret = curl_exec($ch);
+	return $ret, $ch;
  }
-// set some cURL options
-//$ret = curl_setopt($ch, CURLOPT_URL,				 "http://10.124.20.49:8161/demo/message/ifl_ticket?type=queue&clientId=ngx136&Timeouts=1");
-$ret = curl_setopt($ch, CURLOPT_URL,				 "http://10.124.20.49:8161/demo/message/rhomobile?type=queue&clientId=ngx136&Timeouts=1");
-//$ret = curl_setopt($ch, CURLOPT_HEADER,				 1);
-$ret = curl_setopt($ch, CURLOPT_FOLLOWLOCATION,		 1);
-$ret = curl_setopt($ch, CURLOPT_RETURNTRANSFER,		 1);
-$ret = curl_setopt($ch, CURLOPT_TIMEOUT,			 2);
-$ret = curl_setopt($ch, CURLINFO_STARTTRANSFER_TIME, 2);
-
-// execute
-$ret = curl_exec($ch);
+$ret, $ch = curlget();
 while (true) {
 	if (empty($ret)) {
 		// some kind of an error happened
@@ -43,7 +45,7 @@ while (true) {
 		curl_close($ch); // close cURL handler
 		if (empty($info['http_code'])) {
 			//die("No HTTP code was returned");
-			echo "data-base has been destroyed\n";
+			echo "MQ has been destroyed\n";
 			sleep(5);
 		} else {
 			// load the HTTP codes
