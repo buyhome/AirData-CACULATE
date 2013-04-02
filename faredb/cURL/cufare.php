@@ -16,20 +16,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//$url = "http://10.124.20.49:8161/demo/message/ifl_ticket?type=queue&clientId=ngx136&Timeouts=1"
-$mqurl = "http://10.124.20.49:8161/demo/message/rhomobile?type=queue&clientId=ngx136&Timeouts=1"
+//$mqurl = "http://10.124.20.49:8161/demo/message/ifl_ticket?type=queue&clientId=ngx136&Timeouts=1"
+$mqurl = "http://10.124.20.49:8161/demo/message/rhomobile?type=queue&clientId=ngx136&Timeouts=1";
 function curlget($url) {
 	$ch = curl_init(); // create cURL handle (ch)
 	if (!$ch) {
 		die("Couldn't initialize a cURL handle");
 	}
 	// set some cURL options
-	$ret = curl_setopt($ch, CURLOPT_URL,				 $url);
-	//$ret = curl_setopt($ch, CURLOPT_HEADER,					1);
+	$ret = curl_setopt($ch, CURLOPT_URL,				$url);
+	//$ret = curl_setopt($ch, CURLOPT_HEADER,			1);
 	$ret = curl_setopt($ch, CURLOPT_FOLLOWLOCATION,		 	1);
 	$ret = curl_setopt($ch, CURLOPT_RETURNTRANSFER,		 	1);
-	$ret = curl_setopt($ch, CURLOPT_TIMEOUT,			 	2);
-	$ret = curl_setopt($ch, CURLINFO_STARTTRANSFER_TIME, 	2);
+	$ret = curl_setopt($ch, CURLOPT_TIMEOUT,			2);
+	$ret = curl_setopt($ch, CURLINFO_STARTTRANSFER_TIME, 		2);
 	// execute
 	$ret = curl_exec($ch);
 	return array($ret, $ch);
