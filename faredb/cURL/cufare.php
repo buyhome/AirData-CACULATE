@@ -21,36 +21,45 @@ if (!$ch) {
 	die("Couldn't initialize a cURL handle");
  }
 // set some cURL options
-$ret = curl_setopt($ch, CURLOPT_URL,					"http://10.124.20.49:8161/demo/message/ifl_ticket?type=queue&clientId=ngx136&Timeouts=1");
-$ret = curl_setopt($ch, CURLOPT_HEADER,					1);
-$ret = curl_setopt($ch, CURLOPT_FOLLOWLOCATION,			1);
-$ret = curl_setopt($ch, CURLOPT_RETURNTRANSFER,			1);
-$ret = curl_setopt($ch, CURLOPT_TIMEOUT,				2);
-$ret = curl_setopt($ch, CURLINFO_STARTTRANSFER_TIME,	2);
+//$ret = curl_setopt($ch, CURLOPT_URL,				 "http://10.124.20.49:8161/demo/message/ifl_ticket?type=queue&clientId=ngx136&Timeouts=1");
+$ret = curl_setopt($ch, CURLOPT_URL,				 "http://10.124.20.49:8161/demo/message/rhomobile?type=queue&clientId=ngx136&Timeouts=1");
+//$ret = curl_setopt($ch, CURLOPT_HEADER,				 1);
+$ret = curl_setopt($ch, CURLOPT_FOLLOWLOCATION,		 1);
+$ret = curl_setopt($ch, CURLOPT_RETURNTRANSFER,		 1);
+$ret = curl_setopt($ch, CURLOPT_TIMEOUT,			 2);
+$ret = curl_setopt($ch, CURLINFO_STARTTRANSFER_TIME, 2);
 
 // execute
 $ret = curl_exec($ch);
-if (empty($ret)) {
-	// some kind of an error happened
-	die(curl_error($ch));
-	curl_close($ch); // close cURL handler
-} else {
-	$info = curl_getinfo($ch);
-	curl_close($ch); // close cURL handler
-	if (empty($info['http_code'])) {
-		die("No HTTP code was returned");
+while (true) {
+	if (empty($ret)) {
+		// some kind of an error happened
+		//die(curl_error($ch));
+		curl_close($ch); // close cURL handler
+		echo "No messages in the queue\n";
+		sleep(5);
 	} else {
-		// load the HTTP codes
-		$http_codes = parse_ini_file("/data/huangqi/stomp/php/examples/faredb/code.ini");
-		// echo results
-		echo "\nThe server responded: ";
-		//echo "<br/>";
-		echo $info['http_code'] . " " . $http_codes[$info['http_code']];
-		echo "\n";
-		echo $ret;
-		postfare($ret);
+		$info = curl_getinfo($ch);
+		curl_close($ch); // close cURL handler
+		if (empty($info['http_code'])) {
+			//die("No HTTP code was returned");
+			echo "data-base has been destroyed\n";
+			sleep(5);
+		} else {
+			// load the HTTP codes
+			$http_codes = parse_ini_file("/data/huangqi/stomp/php/examples/faredb/code.ini");
+			// echo results
+			//echo "\nThe server responded: ";
+			//echo "<br/>";
+			//echo $info['http_code'] . " " . $http_codes[$info['http_code']];
+			//echo "\n";
+			echo $ret;
+			//$obj = json_decode($ret);
+			//print $obj;
+			postfare($ret);
+			sleep(1);
+		}
 	}
-
 }
 function postfare($ary) {
 	$ch = curl_init();
