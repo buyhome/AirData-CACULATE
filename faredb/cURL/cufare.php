@@ -16,33 +16,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- function curlget() {
+//$url = "http://10.124.20.49:8161/demo/message/ifl_ticket?type=queue&clientId=ngx136&Timeouts=1"
+$mqurl = "http://10.124.20.49:8161/demo/message/rhomobile?type=queue&clientId=ngx136&Timeouts=1"
+function curlget($url) {
 	$ch = curl_init(); // create cURL handle (ch)
 	if (!$ch) {
 		die("Couldn't initialize a cURL handle");
-	 }
+	}
 	// set some cURL options
-	$ret = curl_setopt($ch, CURLOPT_URL,				 "http://10.124.20.49:8161/demo/message/ifl_ticket?type=queue&clientId=ngx136&Timeouts=1");
-	//$ret = curl_setopt($ch, CURLOPT_HEADER,				 1);
-	$ret = curl_setopt($ch, CURLOPT_FOLLOWLOCATION,		 1);
-	$ret = curl_setopt($ch, CURLOPT_RETURNTRANSFER,		 1);
-	$ret = curl_setopt($ch, CURLOPT_TIMEOUT,			 2);
-	$ret = curl_setopt($ch, CURLINFO_STARTTRANSFER_TIME, 2);
+	$ret = curl_setopt($ch, CURLOPT_URL,				 $url);
+	//$ret = curl_setopt($ch, CURLOPT_HEADER,					1);
+	$ret = curl_setopt($ch, CURLOPT_FOLLOWLOCATION,		 	1);
+	$ret = curl_setopt($ch, CURLOPT_RETURNTRANSFER,		 	1);
+	$ret = curl_setopt($ch, CURLOPT_TIMEOUT,			 	2);
+	$ret = curl_setopt($ch, CURLINFO_STARTTRANSFER_TIME, 	2);
 	// execute
 	$ret = curl_exec($ch);
-	return $ret, $ch;
- }
-$ret, $ch = curlget();
+	return array($ret, $ch);
+}
+$messages = array();
+$messages = curlget($mqurl);
 while (true) {
-	if (empty($ret)) {
+	if (empty($messages[0])) {
 		// some kind of an error happened
 		//die(curl_error($ch));
-		curl_close($ch); // close cURL handler
+		curl_close($messages[1]); // close cURL handler
 		echo "No messages in the queue\n";
 		sleep(5);
 	} else {
-		$info = curl_getinfo($ch);
-		curl_close($ch); // close cURL handler
+		$info = curl_getinfo($messages[1]);
+		curl_close($messages[1]); // close cURL handler
 		if (empty($info['http_code'])) {
 			//die("No HTTP code was returned");
 			echo "MQ has been destroyed\n";
@@ -55,10 +58,10 @@ while (true) {
 			//echo "<br/>";
 			//echo $info['http_code'] . " " . $http_codes[$info['http_code']];
 			//echo "\n";
-			echo $ret;
+			echo $messages[0];
 			//$obj = json_decode($ret);
 			//print $obj;
-			postfare($ret);
+			postfare($messages[1]);
 			sleep(1);
 		}
 	}
