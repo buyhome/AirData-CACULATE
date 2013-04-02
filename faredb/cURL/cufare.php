@@ -24,7 +24,7 @@ if (!$ch) {
 $ret = curl_setopt($ch, CURLOPT_URL,					"http://10.124.20.49:8161/demo/message/ifl_ticket?type=queue&clientId=ngx136&Timeouts=1");
 $ret = curl_setopt($ch, CURLOPT_HEADER,					1);
 $ret = curl_setopt($ch, CURLOPT_FOLLOWLOCATION,			1);
-$ret = curl_setopt($ch, CURLOPT_RETURNTRANSFER,			0);
+$ret = curl_setopt($ch, CURLOPT_RETURNTRANSFER,			1);
 $ret = curl_setopt($ch, CURLOPT_TIMEOUT,				2);
 $ret = curl_setopt($ch, CURLINFO_STARTTRANSFER_TIME,	2);
 
