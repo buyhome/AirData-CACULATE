@@ -64,7 +64,7 @@ while (true) {
 			echo $messages[0];
 			//$obj = json_decode($ret);
 			//print $obj;
-			postfare($messages[1]);
+			postfare($messages[0]);
 			sleep(1);
 			$messages = curlget($mqurl);
 		}
@@ -79,13 +79,15 @@ function postfare($ary) {
 	$pet = curl_exec($ch);
 	if (empty($pet)) {
 		// some kind of an error happened
-		die(curl_error($ch));
+		//die(curl_error($ch));
 		curl_close($ch); // close cURL handler
+		echo "Could NOT connect to data-base\n";
 	} else {
 		$pinfo = curl_getinfo($ch);
 		curl_close($ch); // close cURL handler
 		if (empty($pinfo['http_code'])) {
-			die("No HTTP code was returned");
+			//die("No HTTP code was returned");
+			echo "data-base has been destroyed\n";
 		} else {
 			// load the HTTP codes
 			$http_codes = parse_ini_file("/data/huangqi/stomp/php/examples/faredb/code.ini");
