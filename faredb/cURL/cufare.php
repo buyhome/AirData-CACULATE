@@ -16,8 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//$mqurl = "http://10.124.20.49:8161/demo/message/ifl_ticket?type=queue&clientId=ngx136&Timeouts=1";
-$mqurl = "http://10.124.20.49:8161/demo/message/rhomobile?type=queue&clientId=ngx136&Timeouts=1";
+$mqurl = "http://10.124.20.49:8161/demo/message/ifl_ticket?type=queue&clientId=ngx136&Timeouts=1";
 function curlget($url) {
 	global $ch;
 	$ch = curl_init(); // create cURL handle (ch)
