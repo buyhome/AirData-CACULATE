@@ -16,9 +16,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//$mqurl = "http://10.124.20.49:8161/demo/message/ifl_ticket?type=queue&clientId=ngx136&Timeouts=1"
+//$mqurl = "http://10.124.20.49:8161/demo/message/ifl_ticket?type=queue&clientId=ngx136&Timeouts=1";
 $mqurl = "http://10.124.20.49:8161/demo/message/rhomobile?type=queue&clientId=ngx136&Timeouts=1";
 function curlget($url) {
+	global $ch;
 	$ch = curl_init(); // create cURL handle (ch)
 	if (!$ch) {
 		die("Couldn't initialize a cURL handle");
@@ -36,6 +37,7 @@ function curlget($url) {
 }
 $messages = array();
 $messages = curlget($mqurl);
+//echo $messages[1];
 while (true) {
 	if (empty($messages[0])) {
 		// some kind of an error happened
@@ -43,6 +45,7 @@ while (true) {
 		curl_close($messages[1]); // close cURL handler
 		echo "No messages in the queue\n";
 		sleep(5);
+		$messages = curlget($mqurl);
 	} else {
 		$info = curl_getinfo($messages[1]);
 		curl_close($messages[1]); // close cURL handler
@@ -50,6 +53,7 @@ while (true) {
 			//die("No HTTP code was returned");
 			echo "MQ has been destroyed\n";
 			sleep(5);
+			$messages = curlget($mqurl);
 		} else {
 			// load the HTTP codes
 			$http_codes = parse_ini_file("/data/huangqi/stomp/php/examples/faredb/code.ini");
@@ -63,6 +67,7 @@ while (true) {
 			//print $obj;
 			postfare($messages[1]);
 			sleep(1);
+			$messages = curlget($mqurl);
 		}
 	}
 }
