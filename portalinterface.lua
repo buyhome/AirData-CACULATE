@@ -11,6 +11,16 @@ local JSON = require("cjson");
 -- originality
 local error001 = JSON.encode({ ["errorcode"] = 001, ["description"] = "NO RESULT"});
 local error002 = JSON.encode({ ["errorcode"] = 002, ["description"] = "Your request time is NOT behind yesterday."});
+-- Faredata server error Function
+function error003(des)
+	local res = JSON.encode({ ["errorcode"] = 003, ["description"] = des});
+	return res
+end
+-- Caculate server error Function
+function error004(des)
+	local res = JSON.encode({ ["errorcode"] = 004, ["description"] = des});
+	return res
+end
 -- ready to connect to Faredata server.
 local red, err = redis:new()
 if not red then
@@ -37,17 +47,7 @@ if not csdok then
 	ngx.say(error004("failed to connect Caculate server: ", csderr))
 	return
 end
--- Faredata server error Function
-function error003(des)
-	local res = JSON.encode({ ["errorcode"] = 003, ["description"] = des});
-	return res
-end
--- Caculate server error Function
-function error004(des)
-	local res = JSON.encode({ ["errorcode"] = 004, ["description"] = des});
-	return res
-end
--- Function
+-- flow Function
 function table_is_empty(t)
 	return next(t)
 end
@@ -943,14 +943,14 @@ if ngx.var.request_method == "POST" then
 	end
 	-- put it into the connection pool of size 512,
 	-- with 0 idle timeout
-	local ok, err = red:set_keepalive(0, 512)
-	if not ok then
-		ngx.say("failed to set keepalive with Faredata server: ", err)
+	local rok, rerr = red:set_keepalive(0, 512)
+	if not rok then
+		ngx.say("failed to set keepalive with Faredata server: ", rerr)
 		return
 	end
-	local ok, err = csd:set_keepalive(0, 512)
-	if not ok then
-		ngx.say("failed to set keepalive with Caculate server: ", err)
+	local cok, cerr = csd:set_keepalive(0, 512)
+	if not cok then
+		ngx.say("failed to set keepalive with Caculate server: ", cerr)
 		return
 	end
 	-- or just close the connection right away:
