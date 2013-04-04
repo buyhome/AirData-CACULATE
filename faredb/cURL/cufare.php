@@ -15,6 +15,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * http://rhomobi.com/topics/126
+	Example #1 iconv() example
+	$text = "This is the Euro symbol 'ву'.";
+	echo 'Original : ', $text, PHP_EOL;
+	echo 'TRANSLIT : ', iconv("UTF-8", "ISO-8859-1//TRANSLIT", $text), PHP_EOL;
+	echo 'IGNORE   : ', iconv("UTF-8", "ISO-8859-1//IGNORE", $text), PHP_EOL;
+	echo 'Plain    : ', iconv("UTF-8", "ISO-8859-1", $text), PHP_EOL;
  */
 $mqurl = "http://10.124.20.49:8161/demo/message/ifl_ticket?type=queue&clientId=ngx136&Timeouts=1";
 function curlget($url) {
@@ -60,11 +68,12 @@ while (true) {
 			//echo "\nThe server responded: ";
 			//echo "<br/>";
 			//echo $info['http_code'] . " " . $http_codes[$info['http_code']];
-			//echo "\n";
 			echo $messages[0];
+			echo "\n";
 			//$obj = json_decode($ret);
 			//print $obj;
-			postfare($messages[0]);
+			$content = iconv("ISO-8859-1", "UTF-8//IGNORE", $messages[0]);
+			postfare($content);
 			sleep(1);
 			$messages = curlget($mqurl);
 		}

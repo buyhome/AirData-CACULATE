@@ -26,6 +26,7 @@ local error001 = JSON.encode({ ["errorcode"] = 1, ["description"] = "Please Chec
 local error003 = JSON.encode({ ["errorcode"] = 3, ["description"] = "Please Check if content.ticketSegments[1].goStartTime=goEndTime?"});
 local error004 = JSON.encode({ ["errorcode"] = 4, ["description"] = "Please Check if content.ticketSegments[1].goStartTime&goEndTime.allowtime array?"});
 local error005 = JSON.encode({ ["errorcode"] = 5, ["description"] = "Please Check if content.ticketSegments[1].goStartTime&goEndTime.limitedTime array?"});
+local error006 = JSON.encode({ ["errorcode"] = 6, ["description"] = "Please Check the fare's ticketPolicyFiles!"});
 -- The FARE had already been stored
 function error002(des)
 	local res = JSON.encode({ ["errorcode"] = 2, ["description"] = des});
@@ -174,6 +175,20 @@ if ngx.var.request_method == "POST" then
 					-- Get the fid = fare:[farekey]:id
 					-- ngx.print("The real fare.id is fid: ", fid);
 					-- ngx.print("\r\n---------------------\r\n");
+					-- 20130326+ticketPolicyFiles
+					-- ticketPolicyFiles information.0
+					if content.ticketPolicyFiles ~= nil then
+						for idx, value in pairs(content.ticketPolicyFiles) do
+							local res, err = red:hmset("fare:" .. fid .. ":POLICY:file", idx, value)
+							if not res then
+								ngx.say("failed to hmset the hashes data : [fare:" .. fid .. ":POLICY:file]", err);
+								return
+							end
+						end
+					else
+						ngx.print(error006);
+						ngx.exit(200);
+					end
 					-- ready to store the fare information.
 					-- baseFARE information.
 					local resbasefare, bferror = red:mset("fare:" .. fid .. ":AVHCMD", avhmulti, "fare:" .. fid .. ":ORGDST", content.org .. content.dst, "fare:" .. fid .. ":BASE_AIRLINE", content.baseAirLine, "fare:" .. fid .. ":CITY_PATH", content.airPortPath, "fare:" .. fid .. ":SELL_START_DATE", content.sellStartDate, "fare:" .. fid .. ":SELL_END_DATE", content.sellEndDate, "fare:" .. fid .. ":TRAVELER_TYPE_ID", content.travelerTypeId, "fare:" .. fid .. ":S_NUMBER", content.SNumber, "fare:" .. fid .. ":POLICY:ID", content.policyId, "fare:" .. fid .. ":CURRENCY_CODE", content.currencyCode, "fare:" .. fid .. ":PRICE", content.price, "fare:" .. fid .. ":CHILD_PRICE", content.childPrice, "fare:" .. fid .. ":MIN_TRAVELER_COUNT", content.minTravelerCount)
@@ -439,15 +454,6 @@ if ngx.var.request_method == "POST" then
 					if not plyres then
 						ngx.print(error002("failed to SET POLICY: " .. content.policyId, plyerr));
 						return
-					end
-					-- 20130326
-					-- ticketPolicyFiles information.0
-					for idx, value in pairs(content.ticketPolicyFiles) do
-						local res, err = red:hmset("fare:" .. fid .. ":POLICY:file", idx, value)
-						if not res then
-							ngx.say("failed to hmset the hashes data : [fare:" .. fid .. ":POLICY:file]", err);
-							return
-						end
 					end
 					ngx.print(error000);
 				else
