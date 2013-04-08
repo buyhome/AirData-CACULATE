@@ -29,7 +29,8 @@ if not red then
 end
 -- Sets the timeout (in ms) protection for subsequent operations, including the connect method.
 red:set_timeout(600)
-local ok, err = red:connect("192.168.163.130", 6366)
+local ok, err = red:connect("127.0.0.1", 6366)
+-- local ok, err = red:connect("192.168.163.130", 6366)
 if not ok then
 	ngx.say(error003("failed to connect Faredata server: ", err))
 	return
