@@ -139,7 +139,7 @@ function getprice(pfid)
 	end
 	return tonumber(fidprice)
 end
-function cacflt(ckey, fidi, fidj, fv)
+function cacflt(ckey, fidi, fidj, fv, fresnly)
 	local krs, ker = red:exists("fare:" .. fidi .. ":FLIGHT:0")
 	if not krs then
 		ngx.say(error003("failed to EXISTS fare:" .. fidi .. ":FLIGHT:0", ker));
@@ -179,10 +179,20 @@ function cacflt(ckey, fidi, fidj, fv)
 							-- begin to get the price of CNY.
 							local pri = getprice(fidi);
 							-- ngx.say(pri);
-							local r, e = csd:zadd("cac:" .. ckey .. ":res:" .. fv .. ":st", pri, fidi)
-							if not r then
-								ngx.say(error004("failed to zadd the fare sortdatas:[cac:" .. ckey .. ":res:" .. fv .. ":st]", e));
+							-- ngx.say(fresnly);
+							local bk, errbk = csd:hget("fres:" .. fresnly .. ":fid", fidi)
+							if not bk then
+								ngx.say(error004("failed to hget the bunks of the fresid:[fres:" .. fresnly .. ":fid]", errbk));
 								return
+							else
+								local bks = JSON.decode(bk);
+								table.insert(bks, fidi)
+								local bunks = JSON.encode(bks);
+								local r, e = csd:zadd("cac:" .. ckey .. ":res:" .. fv .. ":st", pri, bunks)
+								if not r then
+									ngx.say(error004("failed to zadd the fare sortdatas:[cac:" .. ckey .. ":res:" .. fv .. ":st]", e));
+									return
+								end
 							end
 						end
 						bunkidxi = bunkidxi + 1;
@@ -251,10 +261,20 @@ function cacflt(ckey, fidi, fidj, fv)
 							-- begin to get the price of CNY.
 							local pri = getprice(fidi);
 							-- ngx.say(pri);
-							local r, e = csd:zadd("cac:" .. ckey .. ":res:" .. fv .. ":st", pri, fidi)
-							if not r then
-								ngx.say(error004("failed to zadd the fare sortdatas:[cac:" .. ckey .. ":res:" .. fv .. ":st]", e));
+							-- ngx.say(fresnly);
+							local bk, errbk = csd:hget("fres:" .. fresnly .. ":fid", fidi)
+							if not bk then
+								ngx.say(error004("failed to hget the bunks of the fresid:[fres:" .. fresnly .. ":fid]", errbk));
 								return
+							else
+								local bks = JSON.decode(bk);
+								table.insert(bks, fidi)
+								local bunks = JSON.encode(bks);
+								local r, e = csd:zadd("cac:" .. ckey .. ":res:" .. fv .. ":st", pri, bunks)
+								if not r then
+									ngx.say(error004("failed to zadd the fare sortdatas:[cac:" .. ckey .. ":res:" .. fv .. ":st]", e));
+									return
+								end
 							end
 						end
 						bunkidxi = bunkidxi + 1;
@@ -850,16 +870,16 @@ if ngx.var.request_method == "POST" then
 										for fk, fv in pairs(smemres) do
 											-- ngx.print(fv);
 											-- ngx.print("\r\n++++avhid++++\r\n");
-											local res, err = csd:get("fres:" .. ngx.md5(ckey .. "_" .. v) .. ":id")
-											if not res then
-												ngx.say(error004("failed to get fres:" .. ngx.md5(ckey .. "_" .. v) .. ":id", err));
+											local fresnly, errnly = csd:get("fres:" .. ngx.md5(ckey .. "_" .. v) .. ":id")
+											if not fresnly then
+												ngx.say(error004("failed to get fres:" .. ngx.md5(ckey .. "_" .. v) .. ":id", errnly));
 												return
 											else
 												-- Need to HKEYS key of fid to Check the fare:$fid:FLIGHT
-												-- local fid, frr = csd:hvals("fres:" .. res .. ":fid")
-												local fid, frr = csd:hgetall("fres:" .. res .. ":fid")
+												-- local fid, frr = csd:hvals("fres:" .. fresnly .. ":fid")
+												local fid, frr = csd:hgetall("fres:" .. fresnly .. ":fid")
 												if not fid then
-													ngx.say(error004("failed to hvals fres:" .. res .. ":fid", frr));
+													ngx.say(error004("failed to hvals fres:" .. fresnly .. ":fid", frr));
 													return
 												else
 													local fididxs = table.getn(fid);
@@ -876,7 +896,7 @@ if ngx.var.request_method == "POST" then
 														else
 															if trs == 0 then
 																-- LIMITEDTIME does NOT exist
-																cacflt(ckey, fid[fididxi], fid[fididxj], fv);
+																cacflt(ckey, fid[fididxi], fid[fididxj], fv, fresnly);
 															else
 																-- LIMITEDTIME exist
 																-- first to get the avhid's depTime.
@@ -922,11 +942,11 @@ if ngx.var.request_method == "POST" then
 																					return
 																				else
 																					if table_is_empty(limres) == nil then
-																						cacflt(ckey, fid[fididxi], fid[fididxj], fv);
+																						cacflt(ckey, fid[fididxi], fid[fididxj], fv, fresnly);
 																					end
 																				end
 																			else
-																				cacflt(ckey, fid[fididxi], fid[fididxj], fv);
+																				cacflt(ckey, fid[fididxi], fid[fididxj], fv, fresnly);
 																			end
 																		end
 																	end
@@ -964,7 +984,7 @@ if ngx.var.request_method == "POST" then
 								-- ready to get the sorted fltresult.
 								local srs, ser = csd:exists("cac:" .. ckey .. ":res:st")
 								if not srs then
-									ngx.say(error003("failed to EXISTS cac:" .. ckey .. ":res:st", ser));
+									ngx.say(error003("failed to EXISTS [cac:" .. ckey .. ":res:st]", ser));
 								else
 									-- Check if the fltresult is nil?
 									if srs == 0 then
@@ -973,7 +993,7 @@ if ngx.var.request_method == "POST" then
 									else
 										local fltavh, flterr = csd:zrangebyscore("cac:" .. ckey .. ":res:st", "-inf", "+inf", "WITHSCORES")
 										if not fltavh then
-											ngx.say(error004("failed to zrangebyscore [cac:" .. ckey .. ":res:st", flterr));
+											ngx.say(error004("failed to zrangebyscore [cac:" .. ckey .. ":res:st]", flterr));
 											return
 										else
 											local flttab = {};
@@ -983,6 +1003,7 @@ if ngx.var.request_method == "POST" then
 											local flti = 2;
 											while flti <= flts do
 												local segments = {};
+												local sortfare = {};
 												-- flttab[flti-1] = fltavh[flti];
 												local segs, segerr = csd:get("avh:" .. ckey .. ":" .. fltavh[flti-1] .. ":s_number")
 												if not segs then
@@ -1008,6 +1029,28 @@ if ngx.var.request_method == "POST" then
 														segi = segi + 1;
 													end
 												end
+												-- ngx.print(fltavh[flti-1]);
+												-- ngx.print("\r\n------------------------\r\n");
+												local frdes, frdrr = csd:zrangebyscore("cac:" .. ckey .. ":res:" .. fltavh[flti-1] .. ":st", "-inf", "+inf", "WITHSCORES")
+												if not frdes then
+													ngx.say(error004("failed to zrangebyscore [cac:" .. ckey .. ":res:" .. fltavh[flti-1] .. ":st]", frdrr));
+													return
+												else
+													local flens = table.getn(frdes);
+													local fleni = 2;
+													while fleni <= flens do
+														local farebunk = {};
+														-- ngx.print(frdes[fleni-1] .. ":" .. frdes[fleni]);
+														-- ngx.print("\r\n+++++++++\r\n");
+														local bunks = JSON.decode(frdes[fleni-1]);
+														-- sortfare[frdes[fleni]] = JSON.decode(frdes[fleni-1]);
+														farebunk["price"] = frdes[fleni];
+														farebunk["bunks"] = bunks;
+														sortfare[math.modf((fleni-1)/2)+1] = farebunk;
+														fleni = fleni + 2;
+													end
+													segments["sortfare"] = sortfare;
+												end
 												flttab[math.modf((flti-1)/2)+1 .. "f"] = segments;
 												-- ngx.print(JSON.encode(segments));
 												-- ngx.print("\r\n------------------------\r\n");
@@ -1017,7 +1060,7 @@ if ngx.var.request_method == "POST" then
 											ngx.print(JSON.encode(flttab));
 											-- ngx.print("\r\n+++++++++\r\n");
 										end
-										delckey(ckey);
+										-- delckey(ckey);
 									end
 								end
 							end
