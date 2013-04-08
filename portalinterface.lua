@@ -9,16 +9,16 @@ local redis = require "resty.redis"
 -- load cjson library
 local JSON = require("cjson");
 -- originality
-local error001 = JSON.encode({ ["errorcode"] = 001, ["description"] = "NO RESULT"});
-local error002 = JSON.encode({ ["errorcode"] = 002, ["description"] = "Your request time is NOT behind yesterday."});
+local error001 = JSON.encode({ ["rescode"] = 1, ["description"] = "NO RESULT"});
+local error002 = JSON.encode({ ["rescode"] = 2, ["description"] = "Your request time is NOT behind yesterday."});
 -- Faredata server error Function
 function error003(des)
-	local res = JSON.encode({ ["errorcode"] = 003, ["description"] = des});
+	local res = JSON.encode({ ["rescode"] = 3, ["description"] = des});
 	return res
 end
 -- Caculate server error Function
 function error004(des)
-	local res = JSON.encode({ ["errorcode"] = 004, ["description"] = des});
+	local res = JSON.encode({ ["rescode"] = 4, ["description"] = des});
 	return res
 end
 -- ready to connect to Faredata server.
@@ -66,28 +66,28 @@ end
 function delckey(ckey)
 	local mkeyres, mkeyerr = red:keys("*" .. ckey .. "*")
 	if not mkeyres then
-		ngx.say("failed to keys *:" .. ckey .. "*", mkeyerr);
+		ngx.say(error003("failed to keys *:" .. ckey .. "*", mkeyerr));
 		return
 	else
 		-- DEL CACULATE cKEYS.
 		for k, v in pairs(mkeyres) do
 			local dkeyres, dkeyerr = red:del(v)
 			if not dkeyres then
-				ngx.say("failed to del *:" .. ckey .. "*", dkeyerr);
+				ngx.say(error003("failed to del *:" .. ckey .. "*", dkeyerr));
 				return
 			end
 		end
 	end
 	local mkeyres, mkeyerr = csd:keys("*" .. ckey .. "*")
 	if not mkeyres then
-		ngx.say("failed to keys *:" .. ckey .. "*", mkeyerr);
+		ngx.say(error004("failed to keys *:" .. ckey .. "*", mkeyerr));
 		return
 	else
 		-- DEL CACULATE cKEYS.
 		for k, v in pairs(mkeyres) do
 			local dkeyres, dkeyerr = csd:del(v)
 			if not dkeyres then
-				ngx.say("failed to del *:" .. ckey .. "*", dkeyerr);
+				ngx.say(error004("failed to del *:" .. ckey .. "*", dkeyerr));
 				return
 			end
 		end
@@ -120,7 +120,7 @@ function getprice(pfid)
 					end
 					local res, err = red:hset("exrate:" .. string.upper(cc), pdate, rate)
 					if not res then
-						ngx.say("failed to hset the hashes data : [exrate:" .. string.upper(cc), err);
+						ngx.say(error003("failed to hset the hashes data : [exrate:" .. string.upper(cc), err));
 						return
 					end
 				end
@@ -160,6 +160,7 @@ function cacflt(ckey, fidi, fidj, fv)
 						local tmpscore = "";
 						local cwscore, cwerrs = csd:zscore("avh:" .. ckey .. ":" .. fv .. ":" .. bunkidxi .. ":cw", bunktable[bunkidxi][1])
 						if not cwscore then
+							-- ngx.say(bunktable[bunkidxi][1]);
 							ngx.say(error004("failed to zscore the cangwei sortdatas:[avh:" .. ckey .. ":" .. fv .. ":" .. bunkidxi .. ":cw]", cwerrs));
 							return
 						else
@@ -177,9 +178,10 @@ function cacflt(ckey, fidi, fidj, fv)
 							end
 							-- begin to get the price of CNY.
 							local pri = getprice(fidi);
+							-- ngx.say(pri);
 							local r, e = csd:zadd("cac:" .. ckey .. ":res:" .. fv .. ":st", pri, fidi)
 							if not r then
-								ngx.say(error004("failed to zadd the cangwei sortdatas:[cac:" .. ckey .. ":res:" .. fv .. ":st]", e));
+								ngx.say(error004("failed to zadd the fare sortdatas:[cac:" .. ckey .. ":res:" .. fv .. ":st]", e));
 								return
 							end
 						end
@@ -230,6 +232,7 @@ function cacflt(ckey, fidi, fidj, fv)
 						local tmpscore = "";
 						local cwscore, cwerrs = csd:zscore("avh:" .. ckey .. ":" .. fv .. ":" .. bunkidxi .. ":cw", bunktable[bunkidxi][1])
 						if not cwscore then
+							-- ngx.say(bunktable[bunkidxi][1]);
 							ngx.say(error004("failed to zscore the cangwei sortdatas:[avh:" .. ckey .. ":" .. fv .. ":" .. bunkidxi .. ":cw]", cwerrs));
 							return
 						else
@@ -247,9 +250,10 @@ function cacflt(ckey, fidi, fidj, fv)
 							end
 							-- begin to get the price of CNY.
 							local pri = getprice(fidi);
+							-- ngx.say(pri);
 							local r, e = csd:zadd("cac:" .. ckey .. ":res:" .. fv .. ":st", pri, fidi)
 							if not r then
-								ngx.say(error004("failed to zadd the cangwei sortdatas:[cac:" .. ckey .. ":res:" .. fv .. ":st]", e));
+								ngx.say(error004("failed to zadd the fare sortdatas:[cac:" .. ckey .. ":res:" .. fv .. ":st]", e));
 								return
 							end
 						end
@@ -299,6 +303,7 @@ if ngx.var.request_method == "POST" then
 		local timestamp = ngx.now();
 		local reqdate = os.date("%Y%m%d", timestamp);
 		local content = JSON.decode(pcontent);
+		--[[
 		ngx.print(content.ORG);
 		ngx.print("\r\n---------------------\r\n");
 		ngx.print(content.DST);
@@ -315,6 +320,7 @@ if ngx.var.request_method == "POST" then
 		ngx.print("\r\n---------------------\r\n");
 		ngx.print(content.DIRECT);
 		ngx.print("\r\n---------------------\r\n");
+		--]]
 		if tonumber(content.DEPARTUREDATE) < tonumber(reqdate) then
 			ngx.print(error002);
 		else
@@ -330,15 +336,15 @@ if ngx.var.request_method == "POST" then
 			-- fare:SELL_START_DATE <= reqdate
 			local selsres, selserr = red:zrangebyscore("ORGDST:" .. city .. ":SELL_START_DATE", "-inf", reqdate)
 			if not selsres then
-				ngx.say("failed to zrangebyscore the ORGDST:" .. city .. ":SELL_START_DATE:" .. reqdate, selserr);
+				ngx.say(error003("failed to zrangebyscore the ORGDST:" .. city .. ":SELL_START_DATE:" .. reqdate, selserr));
 				return
 			else
-				ngx.print(selsres);
-				ngx.print("\r\n+++++++++\r\n");
+				-- ngx.print(selsres);
+				-- ngx.print("\r\n+++++++++\r\n");
 				for skey, svalue in ipairs(selsres) do
 					local tmpres, tmperr = red:sadd("CACULATE:" .. ckey .. ":SSTART", svalue)
 					if not tmpres then
-						ngx.say("failed to SET CACULATE:" .. ckey .. ":SSTART", tmperr);
+						ngx.say(error003("failed to SET CACULATE:" .. ckey .. ":SSTART", tmperr));
 						return
 					end
 				end
@@ -346,15 +352,15 @@ if ngx.var.request_method == "POST" then
 			-- fare:SELL_END_DATE >= reqdate
 			local selsres, selserr = red:zrangebyscore("ORGDST:" .. city .. ":SELL_END_DATE", reqdate, "+inf")
 			if not selsres then
-				ngx.say("failed to zrangebyscore the ORGDST:" .. city .. ":SELL_END_DATE:" .. reqdate, selserr);
+				ngx.say(error003("failed to zrangebyscore the ORGDST:" .. city .. ":SELL_END_DATE:" .. reqdate, selserr));
 				return
 			else
-				ngx.print(selsres);
-				ngx.print("\r\n---------------------\r\n");
+				-- ngx.print(selsres);
+				-- ngx.print("\r\n---------------------\r\n");
 				for skey, svalue in ipairs(selsres) do
 					local tmpres, tmperr = red:sadd("CACULATE:" .. ckey .. ":SEND", svalue)
 					if not tmpres then
-						ngx.say("failed to SET CACULATE:" .. ckey .. ":SEND", tmperr);
+						ngx.say(error003("failed to SET CACULATE:" .. ckey .. ":SEND", tmperr));
 						return
 					end
 				end
@@ -362,16 +368,16 @@ if ngx.var.request_method == "POST" then
 			-- fare:MIN_TRAVELER_COUNT <= PASSENGERNUMBER
 			local mtcres, mtcerr = red:zrangebyscore("ORGDST:" .. city .. ":MIN_TRAVELER_COUNT", "-inf", tonumber(content.PASSENGERNUMBER))
 			if not mtcres then
-				ngx.say("failed to zrangebyscore the ORGDST:" .. city .. ":MIN_TRAVELER_COUNT:" .. content.PASSENGERNUMBER, mtcerr);
+				ngx.say(error003("failed to zrangebyscore the ORGDST:" .. city .. ":MIN_TRAVELER_COUNT:" .. content.PASSENGERNUMBER, mtcerr));
 				return
 			else
-				ngx.print(mtcres);
-				ngx.print("\r\n+++++++++\r\n");
+				-- ngx.print(mtcres);
+				-- ngx.print("\r\n+++++++++\r\n");
 				for mkey, mvalue in ipairs(mtcres) do
 					-- MTC = MIN_TRAVELER_COUNT
 					local tmpres, tmperr = red:sadd("CACULATE:" .. ckey .. ":MTC", mvalue)
 					if not tmpres then
-						ngx.say("failed to SET CACULATE:" .. ckey .. ":MTC", tmperr);
+						ngx.say(error003("failed to SET CACULATE:" .. ckey .. ":MTC", tmperr));
 						return
 					end
 				end
@@ -379,16 +385,16 @@ if ngx.var.request_method == "POST" then
 			-- PERIODS:START <= DEPARTUREDATE
 			local stares, staerr = red:zrangebyscore("PERIODS:START", "-inf", content.DEPARTUREDATE)
 			if not stares then
-				ngx.say("failed to zrangebyscore the PERIODS:START:" .. content.DEPARTUREDATE, staerr);
+				ngx.say(error003("failed to zrangebyscore the PERIODS:START:" .. content.DEPARTUREDATE, staerr));
 				return
 			else
 				-- local hashstares = red:array_to_hash(stares);//FAILED TO PRINT
-				ngx.print(stares);
-				ngx.print("\r\n+++++++++\r\n");
+				-- ngx.print(stares);
+				-- ngx.print("\r\n+++++++++\r\n");
 				for wkey, wvalue in ipairs(stares) do
 					local tmpres, tmperr = red:sadd("CACULATE:" .. ckey .. ":PSTART", wvalue)
 					if not tmpres then
-						ngx.say("failed to SET CACULATE:" .. ckey .. ":PSTART", tmperr);
+						ngx.say(error003("failed to SET CACULATE:" .. ckey .. ":PSTART", tmperr));
 						return
 					end
 				end
@@ -396,15 +402,15 @@ if ngx.var.request_method == "POST" then
 			-- PERIODS:END >= DEPARTUREDATE
 			local endres, enderr = red:zrangebyscore("PERIODS:END", content.DEPARTUREDATE, "+inf")
 			if not endres then
-				ngx.say("failed to zrangebyscore the PERIODS:END:" .. content.DEPARTUREDATE, enderr);
+				ngx.say(error003("failed to zrangebyscore the PERIODS:END:" .. content.DEPARTUREDATE, enderr));
 				return
 			else
-				ngx.print(endres);
-				ngx.print("\r\n+++++++++\r\n");
+				-- ngx.print(endres);
+				-- ngx.print("\r\n+++++++++\r\n");
 				for wkey, wvalue in ipairs(endres) do
 					local tmpres, tmperr = red:sadd("CACULATE:" .. ckey .. ":PEND", wvalue)
 					if not tmpres then
-						ngx.say("failed to SET CACULATE:" .. ckey .. ":PEND", tmperr);
+						ngx.say(error003("failed to SET CACULATE:" .. ckey .. ":PEND", tmperr));
 						return
 					end
 				end
@@ -412,21 +418,21 @@ if ngx.var.request_method == "POST" then
 			-- CACULATE Psinter...
 			local sinterstoreres, sinterstoreerr = red:sinterstore("CACULATE:" .. ckey .. ":Psinter", "CACULATE:" .. ckey .. ":PEND", "CACULATE:" .. ckey .. ":PSTART")
 			if not sinterstoreres then
-				ngx.say("failed to sinterstore CACULATE:" .. ckey .. ":Psinter", sinterstoreerr);
+				ngx.say(error003("failed to sinterstore CACULATE:" .. ckey .. ":Psinter", sinterstoreerr));
 				return
 			else
 				-- CACULATE sdiffstore...
 				local sdiffstoreres, sdiffstoreerr = red:sdiffstore("CACULATE:" .. ckey .. ":diffFAIR", "CACULATE:" .. ckey .. ":Psinter", "PERIODS:" .. tweek)
 				if not sdiffstoreres then
-					ngx.say("failed to sdiffstore CACULATE:" .. ckey .. ":diffFAIR", sdiffstoreerr);
+					ngx.say(error003("failed to sdiffstore CACULATE:" .. ckey .. ":diffFAIR", sdiffstoreerr));
 					return
 				else
 					-- ngx.print(sdiffstoreres);//number of members
-					ngx.print("\r\n++++diffFAIROK++++\r\n");
+					-- ngx.print("\r\n++++diffFAIROK++++\r\n");
 					-- Get the fid base the FAREID.
 					local smemres, smemerr = red:smembers("CACULATE:" .. ckey .. ":diffFAIR")
 					if not smemres then
-						ngx.say("failed to smembers CACULATE:" .. ckey .. ":diffFAIR", smemerr);
+						ngx.say(error003("failed to smembers CACULATE:" .. ckey .. ":diffFAIR", smemerr));
 						return
 					else
 						-- following Check if the pairs can be treated as a table
@@ -434,12 +440,12 @@ if ngx.var.request_method == "POST" then
 							local farehkey = string.sub(string.format("%011d", v), 1, 8);
 							local res, err = red:hget("PERIODS:fid:" .. farehkey, v)
 							if not res then
-								ngx.say("failed to HGET PERIODS:fid: " .. farehkey, err);
+								ngx.say(error003("failed to HGET PERIODS:fid: " .. farehkey, err));
 								return
 							else
 								local resc, errc = red:sadd("CACULATE:" .. ckey .. ":PERIODS", res)
 								if not resc then
-									ngx.say("failed to SET CACULATE:" .. ckey .. ":PERIODS", errc);
+									ngx.say(error003("failed to SET CACULATE:" .. ckey .. ":PERIODS", errc));
 									return
 								end
 							end
@@ -453,53 +459,53 @@ if ngx.var.request_method == "POST" then
 			if content.AIRLINE ~= JSON.null then
 				-- SINTER key [key ...]
 				if content.DIRECT == 1 then
-					ngx.print("\r\n----------content.DIRECT is 1 == all-----------\r\n");
+					-- ngx.print("\r\n----------content.DIRECT is 1 == all-----------\r\n");
 					if content.BUNKLEVEL == JSON.null then
-						ngx.print("\r\n----------content.BUNKLEVEL is not needed-----------\r\n");
+						-- ngx.print("\r\n----------content.BUNKLEVEL is not needed-----------\r\n");
 						local sinterok, sintererr = red:sinter("AVHCMD:" .. cavhcmd, "ORGDST:" .. city .. ":TRAVELER:" .. content.PASSENGERTYPE, "CACULATE:" .. ckey .. ":PERIODS", "CACULATE:" .. ckey .. ":SEND", "CACULATE:" .. ckey .. ":SSTART", "CACULATE:" .. ckey .. ":MTC")
 						if not sinterok then
-							ngx.say("failed to sinterstore CACULATE:" .. ckey .. ":sinter", sintererr);
+							ngx.say(error003("failed to sinterstore CACULATE:" .. ckey .. ":sinter", sintererr));
 							return
 						else
 							fareresult = sinterok;
-							ngx.print(JSON.encode(sinterok));
-							ngx.print("\r\n---------echo sinterOK------------\r\n");
+							-- ngx.print(JSON.encode(sinterok));
+							-- ngx.print("\r\n---------echo sinterOK------------\r\n");
 						end
 					else
-						ngx.print("\r\n----------content.BUNKLEVEL is needed-----------\r\n");
+						-- ngx.print("\r\n----------content.BUNKLEVEL is needed-----------\r\n");
 						local sinterok, sintererr = red:sinter("AVHCMD:" .. cavhcmd, "ORGDST:" .. city .. ":TRAVELER:" .. content.PASSENGERTYPE, "ORGDST:" .. city .. ":BUNKLEVEL:" .. content.BUNKLEVEL, "CACULATE:" .. ckey .. ":PERIODS", "CACULATE:" .. ckey .. ":SEND", "CACULATE:" .. ckey .. ":SSTART", "CACULATE:" .. ckey .. ":MTC")
 						if not sinterok then
-							ngx.say("failed to sinterstore CACULATE:" .. ckey .. ":sinter", sintererr);
+							ngx.say(error003("failed to sinterstore CACULATE:" .. ckey .. ":sinter", sintererr));
 							return
 						else
 							fareresult = sinterok;
-							ngx.print(JSON.encode(sinterok));
-							ngx.print("\r\n---------echo sinterOK------------\r\n");
+							-- ngx.print(JSON.encode(sinterok));
+							-- ngx.print("\r\n---------echo sinterOK------------\r\n");
 						end
 					end
 				else
-					ngx.print("\r\n----------content.DIRECT is 0 == DIRECT-----------\r\n");
+					-- ngx.print("\r\n----------content.DIRECT is 0 == DIRECT-----------\r\n");
 					if content.BUNKLEVEL == JSON.null then
 						ngx.print("\r\n----------content.BUNKLEVEL is not needed-----------\r\n");
 						local sinterok, sintererr = red:sinter("AVHCMD:" .. cavhcmd, "ORGDST:" .. city .. ":S_NUMBER:1", "ORGDST:" .. city .. ":TRAVELER:" .. content.PASSENGERTYPE, "CACULATE:" .. ckey .. ":PERIODS", "CACULATE:" .. ckey .. ":SEND", "CACULATE:" .. ckey .. ":SSTART", "CACULATE:" .. ckey .. ":MTC")
 						if not sinterok then
-							ngx.say("failed to sinterstore CACULATE:" .. ckey .. ":sinter", sintererr);
+							ngx.say(error003("failed to sinterstore CACULATE:" .. ckey .. ":sinter", sintererr));
 							return
 						else
 							fareresult = sinterok;
-							ngx.print(JSON.encode(sinterok));
-							ngx.print("\r\n---------echo sinterOK------------\r\n");
+							-- ngx.print(JSON.encode(sinterok));
+							-- ngx.print("\r\n---------echo sinterOK------------\r\n");
 						end
 					else
-						ngx.print("\r\n----------content.BUNKLEVEL is needed-----------\r\n");
+						-- ngx.print("\r\n----------content.BUNKLEVEL is needed-----------\r\n");
 						local sinterok, sintererr = red:sinter("AVHCMD:" .. cavhcmd, "ORGDST:" .. city .. ":S_NUMBER:1", "ORGDST:" .. city .. ":TRAVELER:" .. content.PASSENGERTYPE, "ORGDST:" .. city .. ":BUNKLEVEL:" .. content.BUNKLEVEL, "CACULATE:" .. ckey .. ":PERIODS", "CACULATE:" .. ckey .. ":SEND", "CACULATE:" .. ckey .. ":SSTART", "CACULATE:" .. ckey .. ":MTC")
 						if not sinterok then
-							ngx.say("failed to sinterstore CACULATE:" .. ckey .. ":sinter", sintererr);
+							ngx.say(error003("failed to sinterstore CACULATE:" .. ckey .. ":sinter", sintererr));
 							return
 						else
 							fareresult = sinterok;
-							ngx.print(JSON.encode(sinterok));
-							ngx.print("\r\n---------echo sinterOK------------\r\n");
+							-- ngx.print(JSON.encode(sinterok));
+							-- ngx.print("\r\n---------echo sinterOK------------\r\n");
 						end
 					end
 				end
@@ -512,20 +518,20 @@ if ngx.var.request_method == "POST" then
 					-- delete CACULATE's data
 					local mkeyres, mkeyerr = red:keys("*" .. ckey .. "*")
 					if not mkeyres then
-						ngx.say("failed to keys *:" .. ckey .. "*", mkeyerr);
+						ngx.say(error003("failed to keys *:" .. ckey .. "*", mkeyerr));
 						return
 					else
-						ngx.print(mkeyres);
-						ngx.print("\r\n---------------------\r\n");
+						-- ngx.print(mkeyres);
+						-- ngx.print("\r\n---------------------\r\n");
 						-- DEL CACULATE cKEYS.
 						for k, v in pairs(mkeyres) do
 							local dkeyres, dkeyerr = red:del(v)
 							if not dkeyres then
-								ngx.say("failed to del *:" .. ckey .. "*", dkeyerr);
+								ngx.say(error003("failed to del *:" .. ckey .. "*", dkeyerr));
 								return
 							end
-							ngx.print(dkeyres);
-							ngx.print("\r\n----------DELOK-----------\r\n");
+							-- ngx.print(dkeyres);
+							-- ngx.print("\r\n----------DELOK-----------\r\n");
 						end
 					end
 				else
@@ -537,7 +543,7 @@ if ngx.var.request_method == "POST" then
 						-- Get the fid's S_NUMBER
 						local resnum, errnum = red:get("fare:" .. v .. ":S_NUMBER")
 						if not resnum then
-							ngx.say("failed to get the :" .. v .. "'s S_NUMBER", errnum);
+							ngx.say(error003("failed to get the :" .. v .. "'s S_NUMBER", errnum));
 							return
 						else
 							-- ngx.say(resnum);
@@ -547,7 +553,7 @@ if ngx.var.request_method == "POST" then
 								-- Get the hashes data of the keys == fare:1:SEGMENTS:1
 								local res, err = red:hget("fare:" .. v .. ":SEGMENTS:" .. segid, "carrier")
 								if not res then
-									ngx.say("failed to HGET SEGMENTS:carrier's fid is:" .. v, err);
+									ngx.say(error003("failed to HGET SEGMENTS:carrier's fid is:" .. v, err));
 									return
 								else
 									-- ngx.say(res);
@@ -558,13 +564,13 @@ if ngx.var.request_method == "POST" then
 							-- CITY_PATH==airport_path
 							local res, err = red:get("fare:" .. v .. ":CITY_PATH")
 							if not res then
-								ngx.say("failed to get the :" .. v .. "'s CITY_PATH", err);
+								ngx.say(error003("failed to get the :" .. v .. "'s CITY_PATH", err));
 								return
 							else
 								-- ngx.say(res);
 								table.insert(tmpfres, { string.upper(content.AIRLINE) })
 								table.insert(tmpfres, { string.upper(res) })
-								ngx.say(tmpfres);
+								-- ngx.say(tmpfres);
 								-- ngx.say(ckey);
 								-- ngx.say(ngx.md5(JSON.encode(tmpfres)));
 								-- ngx.print(ngx.md5(ckey .. "_" .. JSON.encode(tmpfres)));
@@ -576,7 +582,7 @@ if ngx.var.request_method == "POST" then
 								-- Get the ID of the fresmd5
 								local getfidres, getfiderr = csd:get("fres:" .. fresmd5 .. ":id")
 								if not getfidres then
-									ngx.say("failed to get " .. "fres:" .. fresmd5 .. ":id: ", getfiderr)
+									ngx.say(error004("failed to get " .. "fres:" .. fresmd5 .. ":id: ", getfiderr));
 									return
 								else
 									-- Get failure
@@ -584,18 +590,18 @@ if ngx.var.request_method == "POST" then
 										-- fres:id INCR fresid
 										local frescount, ferror = csd:incr("fres:id")
 										if not frescount then
-											ngx.say("failed to INCR fres: ", ferror);
+											ngx.say(error004("failed to INCR fres: ", ferror));
 											return
 										else
-											ngx.say("INCR fres result: ", frescount);
-											ngx.print("\r\n---------------------\r\n");
+											-- ngx.say("INCR fres result: ", frescount);
+											-- ngx.print("\r\n---------------------\r\n");
 											local resultsetnx, fiderror = csd:setnx("fres:" .. fresmd5 .. ":id", frescount)
 											if not resultsetnx then
-												ngx.say("failed to SETNX fresid: ", fiderror);
+												ngx.say(error004("failed to SETNX fresid: ", fiderror));
 												return
 											else
-												ngx.say("SETNX fresid result: ", resultsetnx);
-												ngx.print("\r\n---------------------\r\n");
+												-- ngx.say("SETNX fresid result: ", resultsetnx);
+												-- ngx.print("\r\n---------------------\r\n");
 												-- if resultsetnx ~= 1 that is SETNX is NOT sucess.
 												if resultsetnx == 1 then
 													fresid = frescount;
@@ -607,14 +613,14 @@ if ngx.var.request_method == "POST" then
 										end
 									else
 									-- Get sucess
-										ngx.print("The fres had already been stored!");
-										ngx.print("\r\n---------------------\r\n");
-										ngx.print("fres:" .. fresmd5 .. ":id: ", getfidres);
-										ngx.print("\r\n---------------------\r\n");
+										-- ngx.print("The fres had already been stored!");
+										-- ngx.print("\r\n---------------------\r\n");
+										-- ngx.print("fres:" .. fresmd5 .. ":id: ", getfidres);
+										-- ngx.print("\r\n---------------------\r\n");
 										fresid = tonumber(getfidres);
 									end
-									ngx.print("The real fres.id is : ", fresid);
-									ngx.print("\r\n---------------------\r\n");
+									-- ngx.print("The real fres.id is : ", fresid);
+									-- ngx.print("\r\n---------------------\r\n");
 									local res, err = csd:set("fres:" .. fresid .. ":fresmd5", fresmd5)
 									if not res then
 										ngx.say(error004("failed to set the data : [fres:" .. fresid .. ":fresmd5]", err));
@@ -636,15 +642,15 @@ if ngx.var.request_method == "POST" then
 										-- Get the hashes data of the keys == fare:1:SEGMENTS:1
 										local res, err = red:hget("fare:" .. v .. ":SEGMENTS:" .. segbunk, "bunk")
 										if not res then
-											ngx.say("failed to HGET SEGMENTS:bunk's fid is:" .. v, err);
+											ngx.say(error003("failed to HGET SEGMENTS:bunk's fid is:" .. v, err));
 											return
 										else
 											table.insert(tmpBUNK, { res })
 											segbunk = segbunk + 1;
 										end
 									end
-									ngx.print(JSON.encode(tmpBUNK));
-									ngx.print("\r\n-----------tmpBUNK----------\r\n");
+									-- ngx.print(JSON.encode(tmpBUNK));
+									-- ngx.print("\r\n-----------tmpBUNK----------\r\n");
 									local res, err = csd:hset("fres:" .. fresid .. ":fid", v, JSON.encode(tmpBUNK))
 									if not res then
 										ngx.say(error004("failed to hset the hashes data : [fres:" .. fresid .. ":fid" .. "_" .. v .."]", err));
@@ -662,18 +668,18 @@ if ngx.var.request_method == "POST" then
 					-- transparent non-blocking I/O in Lua via subrequests.
 					-- string.lower @20130308
 					local res = ngx.location.capture("/data-avh/" .. string.lower(content.ORG) .. "/" .. string.lower(content.DST) .. "/" .. string.lower(content.AIRLINE) .. "/" .. content.DEPARTUREDATE .. "/");
-					ngx.say(res.status);
+					-- ngx.say(res.status);
 					-- ngx.say(fresid);
 					if res.status == 200 then
-						ngx.print("\r\n+++++fresid++++\r\n");
+						-- ngx.print("\r\n+++++fresid++++\r\n");
 						-- ngx.say(res.body);
 						local avcontent = JSON.decode(res.body);
-						ngx.print(avcontent.org);
-						ngx.print("\r\n---------------------\r\n");
-						ngx.print(avcontent.dst);
-						ngx.print("\r\n---------------------\r\n");
-						ngx.print(avcontent.itemsCount);
-						ngx.print("\r\n---------------------\r\n");
+						-- ngx.print(avcontent.org);
+						-- ngx.print("\r\n---------------------\r\n");
+						-- ngx.print(avcontent.dst);
+						-- ngx.print("\r\n---------------------\r\n");
+						-- ngx.print(avcontent.itemsCount);
+						-- ngx.print("\r\n---------------------\r\n");
 						-- avItems information.
 						local itemcount = 1;
 						for idx, value in ipairs(avcontent.avItems) do
@@ -684,7 +690,7 @@ if ngx.var.request_method == "POST" then
 							local deptime = tonumber(value.segments[1].depTime);
 							local dpres, dperr = red:zadd("CACULATE:" .. ckey .. ":dep", deptime, itemcount)
 							if not dpres then
-								ngx.say("failed to zadd the depTime sortavhids:[CACULATE:" .. ckey .. ":dep]", dperr);
+								ngx.say(error003("failed to zadd the depTime sortavhids:[CACULATE:" .. ckey .. ":dep]", dperr));
 								return
 							else
 								local scount = 1;
@@ -757,7 +763,7 @@ if ngx.var.request_method == "POST" then
 										-- close the Check of cangweiscore 0
 											local cwres, cwerr = csd:zadd("avh:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":cw", cangweiscore, value1.cangwei_index[cwindexi])
 											if not cwres then
-												ngx.say("failed to zadd the cangwei sortdatas:[avhs:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":cw]", cwerr);
+												ngx.say(error004("failed to zadd the cangwei sortdatas:[avhs:" .. ckey .. ":" .. itemcount .. ":" .. scount .. ":cw]", cwerr));
 												return
 											--[[
 											-- Not do following code by cangweiscore
@@ -823,7 +829,7 @@ if ngx.var.request_method == "POST" then
 						-- CACULATE sinter the freskey[] and avhkey[]...
 						local keyres, keyerr = csd:sinter("cac:" .. ckey .. ":avhkey", "cac:" .. ckey .. ":freskey")
 						if not keyres then
-							ngx.say("failed to sinter cac:" .. ckey .. ":avhkey&freskey", keyerr);
+							ngx.say(error004("failed to sinter cac:" .. ckey .. ":avhkey&freskey", keyerr));
 							return
 						else
 							if table_is_empty(keyres) == nil then
@@ -837,7 +843,7 @@ if ngx.var.request_method == "POST" then
 								for k, v in pairs(keyres) do
 									local smemres, smemerr = csd:smembers("cac:" .. ckey .. ":" .. v .. ":avhid")
 									if not smemres then
-										ngx.say("failed to smembers cac:" .. ckey .. v .. ":avhid", smemerr);
+										ngx.say(error004("failed to smembers cac:" .. ckey .. v .. ":avhid", smemerr));
 										return
 									else
 										-- foreach avhid
@@ -846,14 +852,14 @@ if ngx.var.request_method == "POST" then
 											-- ngx.print("\r\n++++avhid++++\r\n");
 											local res, err = csd:get("fres:" .. ngx.md5(ckey .. "_" .. v) .. ":id")
 											if not res then
-												ngx.say("failed to get fres:" .. ngx.md5(ckey .. "_" .. v) .. ":id", err);
+												ngx.say(error004("failed to get fres:" .. ngx.md5(ckey .. "_" .. v) .. ":id", err));
 												return
 											else
 												-- Need to HKEYS key of fid to Check the fare:$fid:FLIGHT
 												-- local fid, frr = csd:hvals("fres:" .. res .. ":fid")
 												local fid, frr = csd:hgetall("fres:" .. res .. ":fid")
 												if not fid then
-													ngx.say("failed to hvals fres:" .. res .. ":fid", frr);
+													ngx.say(error004("failed to hvals fres:" .. res .. ":fid", frr));
 													return
 												else
 													local fididxs = table.getn(fid);
@@ -899,20 +905,20 @@ if ngx.var.request_method == "POST" then
 																				for ksta, vsta in ipairs(stares) do
 																					local res, err = red:sadd("CACULATE:" .. ckey .. ":sta:" .. fid[fididxi], vsta)
 																					if not res then
-																						ngx.say("failed to SET CACULATE:" .. ckey .. ":sta:" .. fid[fididxi], err);
+																						ngx.say(error003("failed to SET CACULATE:" .. ckey .. ":sta:" .. fid[fididxi], err));
 																						return
 																					end
 																				end
 																				for kend, vend in ipairs(endres) do
 																					local res, err = red:sadd("CACULATE:" .. ckey .. ":end:" .. fid[fididxi], vend)
 																					if not res then
-																						ngx.say("failed to SET CACULATE:" .. ckey .. ":end:" .. fid[fididxi], err);
+																						ngx.say(error003("failed to SET CACULATE:" .. ckey .. ":end:" .. fid[fididxi], err));
 																						return
 																					end
 																				end
 																				local limres, limerr = red:sinter("CACULATE:" .. ckey .. ":sta:" .. fid[fididxi], "CACULATE:" .. ckey .. ":end:" .. fid[fididxi])
 																				if not limres then
-																					ngx.say("failed to sinter CACULATE:" .. ckey .. ":sta&end:" .. fid[fididxi], limerr);
+																					ngx.say(error003("failed to sinter CACULATE:" .. ckey .. ":sta&end:" .. fid[fididxi], limerr));
 																					return
 																				else
 																					if table_is_empty(limres) == nil then
@@ -930,24 +936,27 @@ if ngx.var.request_method == "POST" then
 														fididxi = fididxi + 2;
 														fididxj = fididxj + 2;
 													end
-													-- del fres
-													local dkres, dkerr = csd:del("fres:" .. res .. ":fid")
-													if not dkres then
-														ngx.say("failed to del fres:" .. res .. ":fid", dkerr);
-														return
-													end
-													local dkres, dkerr = csd:del("fres:" .. res .. ":fresmd5")
-													if not dkres then
-														ngx.say("failed to del fres:" .. res .. ":fresmd5", dkerr);
-														return
-													end
 												end
 											end
 										end
 										-- del fresid
+										local drid = csd:get("fres:" .. ngx.md5(ckey .. "_" .. v) .. ":id")
+										if drid then
+											-- del fres
+											local dkres, dkerr = csd:del("fres:" .. drid .. ":fid")
+											if not dkres then
+												ngx.say(error004("failed to del fres:" .. drid .. ":fid", dkerr));
+												return
+											end
+											local dkres, dkerr = csd:del("fres:" .. drid .. ":fresmd5")
+											if not dkres then
+												ngx.say(error004("failed to del fres:" .. drid .. ":fresmd5", dkerr));
+												return
+											end
+										end
 										local dkres, dkerr = csd:del("fres:" .. ngx.md5(ckey .. "_" .. v) .. ":id")
 										if not dkres then
-											ngx.say("failed to del fres:" .. ngx.md5(ckey .. "_" .. v) .. ":id", dkerr);
+											ngx.say(error004("failed to del fres:" .. ngx.md5(ckey .. "_" .. v) .. ":id", dkerr));
 											return
 										end
 									end
@@ -962,7 +971,52 @@ if ngx.var.request_method == "POST" then
 										ngx.print(error001);
 										delckey(ckey);
 									else
-										ngx.say("+++++++++++++++++++++++++++++++++++++++++");
+										local fltavh, flterr = csd:zrangebyscore("cac:" .. ckey .. ":res:st", "-inf", "+inf", "WITHSCORES")
+										if not fltavh then
+											ngx.say(error004("failed to zrangebyscore [cac:" .. ckey .. ":res:st", flterr));
+											return
+										else
+											local flttab = {};
+											local flts = table.getn(fltavh);
+											flttab["f_counts"] = flts / 2;
+											-- ngx.print("\r\n+++++++++\r\n");
+											local flti = 2;
+											while flti <= flts do
+												local segments = {};
+												-- flttab[flti-1] = fltavh[flti];
+												local segs, segerr = csd:get("avh:" .. ckey .. ":" .. fltavh[flti-1] .. ":s_number")
+												if not segs then
+													ngx.say(error004("failed to get avh:" .. ckey .. ":" .. fltavh[flti-1] .. ":s_number", segerr));
+													return
+												else
+													local avhtab = {};
+													-- ngx.say("avh:" .. ckey .. ":" .. fltavh[flti-1] .. ":s_number", segs)
+													local segi = 1;
+													while segi <= tonumber(segs) do
+														local avhdetail, avhdetailerr = csd:hgetall("avh:" .. ckey .. ":" .. fltavh[flti-1] .. ":" .. segi .. ":seg")
+														local avhs = table.getn(avhdetail);
+														local avhi = 2;
+														while avhi <= avhs do
+															avhtab[avhdetail[avhi-1]] = avhdetail[avhi];
+															avhi = avhi + 2;
+														end
+														segments["minprice"] = fltavh[flti]
+														segments["s_number"] = tonumber(segs);
+														segments[segi .. "s"] = avhtab;
+														-- ngx.print(JSON.encode(avhtab));
+														-- ngx.print("\r\n------------------------\r\n");
+														segi = segi + 1;
+													end
+												end
+												flttab[math.modf((flti-1)/2)+1 .. "f"] = segments;
+												-- ngx.print(JSON.encode(segments));
+												-- ngx.print("\r\n------------------------\r\n");
+												flti = flti + 2;
+											end
+											flttab["rescode"] = 0;
+											ngx.print(JSON.encode(flttab));
+											-- ngx.print("\r\n+++++++++\r\n");
+										end
 										delckey(ckey);
 									end
 								end
