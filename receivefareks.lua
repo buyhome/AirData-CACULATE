@@ -218,7 +218,8 @@ if ngx.var.request_method == "POST" then
 							return
 						end
 						-- destroy 20130308 if content.AIRLINE is null, i will get the fid' AVHCMD (CAN/LAX/CZ/ etc.)
-						local cityres, cityerr = red:sadd("ORGDST:" .. content.org .. content.dst .. ":CMD", cavhcmd)
+						-- avhmulti & cavhcmd
+						local cityres, cityerr = red:sadd("ORGDST:" .. content.org .. content.dst .. ":CMD", avhmulti)
 						if not cityres then
 							ngx.say("failed to SET ORGDST'S CMD: ", cityerr);
 							return
