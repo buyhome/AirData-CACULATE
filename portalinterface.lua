@@ -1010,10 +1010,10 @@ if ngx.var.request_method == "POST" then
 													ngx.say(error004("failed to get avh:" .. ckey .. ":" .. fltavh[flti-1] .. ":s_number", segerr));
 													return
 												else
-													local avhtab = {};
 													-- ngx.say("avh:" .. ckey .. ":" .. fltavh[flti-1] .. ":s_number", segs)
 													local segi = 1;
 													while segi <= tonumber(segs) do
+														local avhtab = {};
 														local avhdetail, avhdetailerr = csd:hgetall("avh:" .. ckey .. ":" .. fltavh[flti-1] .. ":" .. segi .. ":seg")
 														local avhs = table.getn(avhdetail);
 														local avhi = 2;
@@ -1060,7 +1060,7 @@ if ngx.var.request_method == "POST" then
 											ngx.print(JSON.encode(flttab));
 											-- ngx.print("\r\n+++++++++\r\n");
 										end
-										-- delckey(ckey);
+										delckey(ckey);
 									end
 								end
 							end
