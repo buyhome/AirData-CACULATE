@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8"?> 
+<resources> 
+  <string name="app_name">MQfare</string>
+  <string name="title">Apache ActiveMQ Stomp Client</string> 
+  <string name="str_button1">启动监听队列</string>
+  <string name="str_button2">发送一条消息</string> 
+</resources> 
+

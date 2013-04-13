@@ -1,0 +1,25 @@
+#Sun Apr 14 01:01:25 CST 2013
+threadPanel.stack.col4=51
+logcat.view.colsize.PID=58
+threadPanel.stack.col3=49
+threadPanel.stack.col2=350
+threadPanel.Col5=306
+threadPanel.Col4=46
+threadPanel.stack.col1=121
+threadPanel.Col3=46
+threadPanel.stack.col0=141
+threadPanel.Col2=75
+threadPanel.Col1=49
+threadPanel.Col0=35
+logcat.view.colsize.TID=58
+eclipse.preferences.version=1
+ddms.logcat.auotmonitor.level=error
+logcat.view.colsize.Level=30
+logcat.view.colsize.Tag=119
+logcat.view.colsize.Time=150
+devicePanel.Col4=76
+devicePanel.Col1=53
+logcat.view.colsize.Application=156
+devicePanel.Col0=125
+logcat.view.colsize.Text=613
+ddms.logcat.automonitor.userprompt=true
