@@ -1,0 +1,8 @@
+	<Resource auth="Container" driverClassName="oracle.jdbc.OracleDriver" maxActive="4" maxIdle="2" maxWait="10000" name="jdbc/cersignuser" password="CERSIGNUSER4dev" type="javax.sql.DataSource"
+	url="jdbc:oracle:thin:@192.168.1.188:1521:ngzb" username="CERSIGNUSER" />
+	<Resource auth="Container" driverClassName="oracle.jdbc.OracleDriver" maxActive="4" maxIdle="2" maxWait="10000" name="jdbc/ssouser" password="SSOUSER4dev" type="javax.sql.DataSource"
+	url="jdbc:oracle:thin:@192.168.1.188:1521:ngzb" username="SSOUSER" />
+	<Resource auth="Container" driverClassName="oracle.jdbc.OracleDriver" maxActive="4" maxIdle="2" maxWait="10000" name="jdbc/ibpsuser" password="IBPSUSER4dev" type="javax.sql.DataSource"
+	url="jdbc:oracle:thin:@192.168.1.188:1521:ngzb" username="IBPSUSER" />
+	<Resource auth="Container" driverClassName="oracle.jdbc.OracleDriver" maxActive="4" maxIdle="2" maxWait="10000" name="jdbc/ngzbuser" password="NGZBUSER4dev" type="javax.sql.DataSource"
+	url="jdbc:oracle:thin:@192.168.1.188:1521:ngzb" username="NGZBUSER" />

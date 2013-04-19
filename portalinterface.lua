@@ -476,7 +476,7 @@ if ngx.var.request_method == "POST" then
 			-- declare the result of fids.
 			local fareresult = "";
 			-- Check content.AIRLINE if it is null
-			if content.AIRLINE ~= JSON.null then
+			if content.AIRLINE ~= JSON.null and content.AIRLINE ~= "" then
 				local cavhcmd = string.upper(content.ORG .. content.DST .. content.AIRLINE);
 				-- SINTER key [key ...]
 				if content.DIRECT == 1 then

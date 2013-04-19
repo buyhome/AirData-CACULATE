@@ -1,6 +1,0 @@
-INDEX VERSION 1.126+C:\Users\.çù\Documents\GitHub\AirData-CACULATE\faredb\Android\.metadata\.plugins\org.eclipse.jdt.core
-3569963317.index
-1508846411.index
-3968065064.index
-253279827.index
-933958712.index
